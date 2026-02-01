@@ -20,3 +20,21 @@ Remote Supervision
 Energy Constraints
      Since the system is powered by a 12V solar supply, it is essential to implement strategies that minimize energy consumption while maintaining reliable operation. Based on the rought power need we envisage to install a  battery lead-acid : E=12V×8Ah=96Wh with a 25 Watts Solar panel .
 
+greenhouse/                  <- racine du projet
+│
+├─ src/                      <- tous les fichiers sources
+│   ├─ greenhouse.ino        <- setup minimal, lance les tasks
+│   ├─ globals.h             <- variables globales, queues, menu, BH1750, OLED, Rotary
+│   ├─ gpio.h                <- toutes les pins + initGPIO()
+│   └─ tasks/                <- toutes les tasks RTOS
+│       ├─ ledTask.h
+│       ├─ ledTask.cpp
+│       ├─ encoderTask.h
+│       ├─ encoderTask.cpp
+│       ├─ menuTask.h
+│       ├─ menuTask.cpp
+│       ├─ bh1750Task.h
+│       └─ bh1750Task.cpp
+│
+└─ (optionnel) libraries/    <- si tu as des libs locales ou modifiées
+
