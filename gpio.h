@@ -1,3 +1,4 @@
+#include "esp32-hal.h"
 #include "esp32-hal-gpio.h"
 #pragma once
 
@@ -64,7 +65,7 @@ inline void initGPIO() {
     digitalWrite (GPIO_VEXT_PIN, LOW); // ON 
 
     // Force OFF at startup 
-    digitalWrite (GPIO_PWM_HEATER, LOW);  
+    analogWrite(GPIO_PWM_HEATER, 155 ) ;  
     digitalWrite (GPIO_FAN , LOW ) ;  
     
 

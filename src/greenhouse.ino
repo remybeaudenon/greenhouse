@@ -33,16 +33,16 @@ static SSD1306Wire display(
 // =========================================================
 //                     GPIO
 // =========================================================
-#define GPIO_BOARD_LED     LED_BUILTIN
-#define GPIO_ENC_CLK 20
-#define GPIO_ENC_DT  19
-#define GPIO_BOARD_BP 0
+//#define GPIO_BOARD_LED     LED_BUILTIN
+//#define GPIO_ENC_CLK 20
+//#define GPIO_ENC_DT  19
+//#define GPIO_BOARD_BP 0
 
 // =========================================================
 //                     BH1750 SUR BUS DÉDIÉ
 // =========================================================
-#define GPIO_BH1750_SDA 47
-#define GPIO_BH1750_SCL 48
+//#define GPIO_BH1750_SDA 47
+//#define GPIO_BH1750_SCL 48
 
 TwoWire I2CBH1750(1);        // 👉 TON bus séparé
 BH1750 lightMeter(0x23);
@@ -73,25 +73,25 @@ Rotary encoder(GPIO_ENC_DT, GPIO_ENC_CLK);
 // =========================================================
 //                     MENU
 // =========================================================
-enum LedMode {
-  LED_OFF,
-  LED_ON,
-  LED_BLINK,
-  LED_TRIM
+enum AppMode {
+  FAN_STOP,
+  FAN_ON,
+  HEATER_ON,
+  HEATER_OFF
 };
 
-LedMode ledMode = LED_TRIM;
+AppMode appMode = HEATER_OFF;
 
 struct MenuItem {
   const char* label;
-  LedMode id;
+  AppMode id;
 };
 
 MenuItem menuItems[] = {
-  { "LED OFF",    LED_OFF },
-  { "LED ON",     LED_ON },
-  { "LED BLINK",  LED_BLINK },
-  { "LED TRIM",   LED_TRIM }
+  { "FAN STOP",    FAN_STOP },
+  { "FAN ON", FAN_ON },
+  { "HEATER ON",  HEATER_ON },
+  { "HEATER OFF",   HEATER_OFF }
 };
 
 const uint8_t MENU_COUNT =
@@ -115,7 +115,7 @@ bh1750_data_t lastLux = {0};
 
 uint8_t getActiveIndex() {
   for (uint8_t i = 0; i < MENU_COUNT; i++) {
-    if (menuItems[i].id == ledMode)
+    if (menuItems[i].id == appMode)
       return i;
   }
   return 0;
@@ -227,47 +227,61 @@ void taskReadBH1750(void *pvParameters) {
 
 
 // -------- Tâche LED --------
-void TaskLED(void *pvParameters) {
 
-  //pinMode(GPIO_BOARD_LED, OUTPUT);
 
+void TaskPLC(void *pvParameters) {
+
+  // ------- INPUT --------------
+  bh1750_data_t luxLocal;
+  //appMode 
+  
+  // ------- LOGIC --------------
+  
   while (true) {
 
-    switch (ledMode) {
+    // ---- INPUT --------- 
+    if (xQueuePeek(queueLux, &luxLocal, 0) == pdTRUE) {
+      lastLux = luxLocal;
+    } 
+    // appMode Global static variable 
 
-      case LED_ON:
-        analogWrite(GPIO_BOARD_LED, 255);
+    switch (appMode) {
+
+      case FAN_ON:
+        digitalWrite(GPIO_FAN, HIGH); 
+        analogWrite(GPIO_PWM_HEATER, 0);
         break;
 
-      case LED_OFF:
-        analogWrite(GPIO_BOARD_LED, 0);
+      case FAN_STOP:
+        digitalWrite(GPIO_FAN, LOW); 
+        analogWrite(GPIO_PWM_HEATER, 0);
         break;
 
-      case LED_BLINK:
-        analogWrite(GPIO_BOARD_LED, 255);
-        vTaskDelay(pdMS_TO_TICKS(500));
-        analogWrite(GPIO_BOARD_LED, 0);
-        vTaskDelay(pdMS_TO_TICKS(500));
-        continue;
+      case HEATER_ON:
+        {
+         float lux = lastLux.lux ;    
+         // Saturation des bornes d'entrée
+         if (lux <= 0)
+          lux = 0;
+         if (lux >= 1000)
+           lux = 255;
 
-      case LED_TRIM:
-        
-        for (int duty = 0; duty <= 255 && ledMode == LED_TRIM; duty++) {
-          analogWrite(GPIO_BOARD_LED, duty);
-          vTaskDelay(pdMS_TO_TICKS(5));
+         // Mise à l'échelle linéaire
+         uint8_t power = static_cast<uint8_t>((lux * 255) / 1000);
+         analogWrite(GPIO_PWM_HEATER, power);
+         digitalWrite(GPIO_FAN, LOW); 
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
-        
-        for (int duty = 255; duty >= 0 && ledMode == LED_TRIM; duty--) {
-          analogWrite(GPIO_BOARD_LED, duty);
-          vTaskDelay(pdMS_TO_TICKS(5));
-        }
-        vTaskDelay(pdMS_TO_TICKS(500));
+        break;
+
+      case HEATER_OFF:
+
+        analogWrite(GPIO_PWM_HEATER, 0 );
+        digitalWrite(GPIO_FAN, LOW); 
         break;
 
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
   }
 }
 
@@ -357,7 +371,7 @@ void menuTask(void *parameter) {
           break;
 
         case EVT_SELECT:
-          ledMode = menuItems[menuIndex].id;
+          appMode = menuItems[menuIndex].id;
           break;
 
         default:
@@ -412,7 +426,7 @@ void setup() {
   queueLux =
     xQueueCreate(1, sizeof(bh1750_data_t));
 
-  xTaskCreate(TaskLED, "TaskLED", 2048, NULL, 1, NULL);
+  xTaskCreate(TaskPLC, "TaskPLC", 2048, NULL, 1, NULL);
 
   xTaskCreatePinnedToCore(
       encoderTask, "EncoderTask",
