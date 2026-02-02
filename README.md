@@ -20,6 +20,7 @@ Remote Supervision
 Energy Constraints
      Since the system is powered by a 12V solar supply, it is essential to implement strategies that minimize energy consumption while maintaining reliable operation. Based on the rought power need we envisage to install a  battery lead-acid : E=12V×8Ah=96Wh with a 25 Watts Solar panel .
 
+NE FONCTIONNE PAS !! 
 greenhouse/                  <- racine du projet
 │
 ├─ src/                      <- tous les fichiers sources
@@ -37,4 +38,19 @@ greenhouse/                  <- racine du projet
 │       └─ bh1750Task.cpp
 │
 └─ (optionnel) libraries/    <- si tu as des libs locales ou modifiées
+
+  Connected Greenhouse 
+
+   MCU : Heltec  [Wifi LoRa 32(V3)]  
+
+   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\Kit Etudiant\HELTECV3  
+   additional borad : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp2‌​32_index.json
+   Libraries  HELTECV3\libraries\Rotary                   url=https://github.com/skathir38/Rotary 
+                                \BH1750                   url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
+                                \Heltec ESP32 Dev-Boards  url=https://github.com/HelTecAutomation/Heltec_ESP32.git
+                                                            NOTA: Remove BH1750 to avoid conflict       
+  VERSION 1.0.0 
+
+
+
 

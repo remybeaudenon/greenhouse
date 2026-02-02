@@ -1,7 +1,7 @@
 /*
   Connected Greenhouse 
 
-   MCU Heltec V3 LoRa (32) 
+   MCU : Heltec  [Wifi LoRa 32(V3)]  
 
    preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\Kit Etudiant\HELTECV3  
    additional borad : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp2‌​32_index.json
@@ -9,7 +9,7 @@
                                 \BH1750  url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
                                 \Heltec ESP32 Dev-Boards    url=https://github.com/HelTecAutomation/Heltec_ESP32.git
                             NOTA: Remove BH1750 to avoid conflict       
-  VERSION 1.0.0 
+  VERSION 1.0.1 
   2/02/2026 
 */
 #include <Arduino.h>
@@ -17,7 +17,7 @@
 #include "HT_SSD1306Wire.h"
 #include <Rotary.h>
 #include <BH1750.h>
-
+#include "gpio.h" 
 // =========================================================
 //                     OLED HELTEC
 // =========================================================
@@ -33,16 +33,16 @@ static SSD1306Wire display(
 // =========================================================
 //                     GPIO
 // =========================================================
-#define LED_PIN     LED_BUILTIN
-#define ENCODER_CLK 20
-#define ENCODER_DT  19
-#define ENCODER_BTN 0
+#define GPIO_BOARD_LED     LED_BUILTIN
+#define GPIO_ENC_CLK 20
+#define GPIO_ENC_DT  19
+#define GPIO_BOARD_BP 0
 
 // =========================================================
 //                     BH1750 SUR BUS DÉDIÉ
 // =========================================================
-#define SDA_BH1750 47
-#define SCL_BH1750 48
+#define GPIO_BH1750_SDA 47
+#define GPIO_BH1750_SCL 48
 
 TwoWire I2CBH1750(1);        // 👉 TON bus séparé
 BH1750 lightMeter(0x23);
@@ -65,7 +65,7 @@ QueueHandle_t queueLux;
 // =========================================================
 //                     ROTARY
 // =========================================================
-Rotary encoder(ENCODER_DT, ENCODER_CLK);
+Rotary encoder(GPIO_ENC_DT, GPIO_ENC_CLK);
 
 #define DIR_NONE 0x00
 #define DIR_CW   0x10
@@ -195,64 +195,71 @@ void drawMenu() {
   display.display();
 }
 
-
 // =========================================================
 //                     TÂCHES
 // =========================================================
 
 // -------- Tâche BH1750 --------
 void taskReadBH1750(void *pvParameters) {
+    bh1750_data_t data;
+    float lastLux = -1; // valeur initiale impossible pour déclencher le premier affichage
 
-  bh1750_data_t data;
+    //vTaskDelay(pdMS_TO_TICKS(30000));
 
-  for (;;) {
+    for (;;) {
+        data.lux = lightMeter.readLightLevel();
 
-    data.lux = lightMeter.readLightLevel();
+        xQueueOverwrite(queueLux, &data);
 
-    xQueueOverwrite(queueLux, &data);
+        if (data.lux != lastLux) {
+            Serial.print("Lux: ");
+            Serial.println(data.lux);
+            lastLux = data.lux;
+        }
 
-    Serial.print("Lux: ");
-    Serial.println(data.lux);
+        if (data.lux = -2 ) 
+          lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE,0x23,&I2CBH1750) ; 
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }
 
 
 // -------- Tâche LED --------
 void TaskLED(void *pvParameters) {
 
-  pinMode(LED_PIN, OUTPUT);
+  //pinMode(GPIO_BOARD_LED, OUTPUT);
 
   while (true) {
 
     switch (ledMode) {
 
       case LED_ON:
-        analogWrite(LED_PIN, 255);
+        analogWrite(GPIO_BOARD_LED, 255);
         break;
 
       case LED_OFF:
-        analogWrite(LED_PIN, 0);
+        analogWrite(GPIO_BOARD_LED, 0);
         break;
 
       case LED_BLINK:
-        analogWrite(LED_PIN, 255);
+        analogWrite(GPIO_BOARD_LED, 255);
         vTaskDelay(pdMS_TO_TICKS(500));
-        analogWrite(LED_PIN, 0);
+        analogWrite(GPIO_BOARD_LED, 0);
         vTaskDelay(pdMS_TO_TICKS(500));
         continue;
 
       case LED_TRIM:
         
         for (int duty = 0; duty <= 255 && ledMode == LED_TRIM; duty++) {
-          analogWrite(LED_PIN, duty);
+          analogWrite(GPIO_BOARD_LED, duty);
           vTaskDelay(pdMS_TO_TICKS(5));
         }
         vTaskDelay(pdMS_TO_TICKS(500));
         
         for (int duty = 255; duty >= 0 && ledMode == LED_TRIM; duty--) {
-          analogWrite(LED_PIN, duty);
+          analogWrite(GPIO_BOARD_LED, duty);
           vTaskDelay(pdMS_TO_TICKS(5));
         }
         vTaskDelay(pdMS_TO_TICKS(500));
@@ -266,7 +273,7 @@ void TaskLED(void *pvParameters) {
 
 // -------- Tâche ENCODEUR --------
 void encoderTask(void *parameter) {
-    pinMode(ENCODER_BTN, INPUT_PULLUP);
+    pinMode(GPIO_BOARD_BP, INPUT_PULLUP);
 
     bool lastReadState = HIGH;
     bool stableState   = HIGH;
@@ -286,7 +293,6 @@ void encoderTask(void *parameter) {
         int diff = currentPosition - lastPosition;
 
         if (abs(diff)  > 2 ) {  // 1 cran 
-            Serial.println(diff) ;
             EncoderEvent_t evt = (diff > 0) ? EVT_DOWN : EVT_UP;
             xQueueSend(encoderQueue, &evt, 0);
 
@@ -295,7 +301,7 @@ void encoderTask(void *parameter) {
         }
 
         // Gestion du bouton avec debounce
-        bool reading = digitalRead(ENCODER_BTN);
+        bool reading = digitalRead(GPIO_BOARD_BP);
 
         if (reading != lastReadState) {
             lastDebounceTime = millis();
@@ -379,14 +385,16 @@ void setup() {
   Serial.begin(115200);
   delay(500);
 
-  encoder.begin(ENCODER_DT, ENCODER_CLK);
+  initGPIO();
+
+  encoder.begin(GPIO_ENC_DT, GPIO_ENC_CLK);
 
   display.init();
   display.clear();
   display.display();
 
   // ===== TON INIT QUI MARCHE =====
-  I2CBH1750.begin(SDA_BH1750, SCL_BH1750);
+  I2CBH1750.begin(GPIO_BH1750_SDA, GPIO_BH1750_SCL);
 
   if (lightMeter.begin(
         BH1750::CONTINUOUS_HIGH_RES_MODE,
@@ -395,7 +403,7 @@ void setup() {
 
     Serial.println("BH1750 OK");
   } else {
-    Serial.println("BH1750 non détecté !");
+    Serial.println("WARNING !!! BH1750 non détecté !");
   }
 
   encoderQueue =
