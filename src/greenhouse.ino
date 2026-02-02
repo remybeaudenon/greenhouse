@@ -1,3 +1,17 @@
+/*
+  Connected Greenhouse 
+
+   MCU Heltec V3 LoRa (32) 
+
+   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\Kit Etudiant\HELTECV3  
+   additional borad : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp2‌​32_index.json
+   Libraries  HELTECV3\libraries\Rotary  url=https://github.com/skathir38/Rotary 
+                                \BH1750  url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
+                                \Heltec ESP32 Dev-Boards    url=https://github.com/HelTecAutomation/Heltec_ESP32.git
+                            NOTA: Remove BH1750 to avoid conflict       
+  VERSION 1.0.0 
+  2/02/2026 
+*/
 #include <Arduino.h>
 #include <Wire.h>
 #include "HT_SSD1306Wire.h"
