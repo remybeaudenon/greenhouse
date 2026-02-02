@@ -53,6 +53,9 @@ QueueHandle_t queueLux;
 // =========================================================
 Rotary encoder(ENCODER_DT, ENCODER_CLK);
 
+#define DIR_NONE 0x00
+#define DIR_CW   0x10
+#define DIR_CCW  0x20
 // =========================================================
 //                     MENU
 // =========================================================
@@ -247,68 +250,65 @@ void TaskLED(void *pvParameters) {
   }
 }
 
-
 // -------- Tâche ENCODEUR --------
 void encoderTask(void *parameter) {
-  pinMode(ENCODER_BTN, INPUT_PULLUP);
+    pinMode(ENCODER_BTN, INPUT_PULLUP);
 
-  bool lastReadState = HIGH;
-  bool stableState   = HIGH;
+    bool lastReadState = HIGH;
+    bool stableState   = HIGH;
+    uint32_t btnPressTime = 0;
+    const uint16_t DEBOUNCE_MS = 50;
+    uint32_t lastDebounceTime = 0;
 
-  uint32_t btnPressTime = 0;
-  const uint16_t DEBOUNCE_MS = 50;
-  uint32_t lastDebounceTime = 0;
+    // Pour suivre la position précédente
+    int lastPosition = encoder.getPosition();
 
-  while (true) {
+    while (true) {
+        // Mets à jour l'encodeur
+        encoder.loop();
 
-    unsigned char r = encoder.process();
+        // Vérifie la rotation
+        int currentPosition = encoder.getPosition();
+        int diff = currentPosition - lastPosition;
 
-    if (r == DIR_CW) {
-      EncoderEvent_t evt = EVT_DOWN;
-      xQueueSend(encoderQueue, &evt, 0);
+        if (abs(diff)  > 2 ) {  // 1 cran 
+            Serial.println(diff) ;
+            EncoderEvent_t evt = (diff > 0) ? EVT_DOWN : EVT_UP;
+            xQueueSend(encoderQueue, &evt, 0);
+
+            // Actualise la position
+            lastPosition = currentPosition;
+        }
+
+        // Gestion du bouton avec debounce
+        bool reading = digitalRead(ENCODER_BTN);
+
+        if (reading != lastReadState) {
+            lastDebounceTime = millis();
+        }
+
+        if ((millis() - lastDebounceTime) > DEBOUNCE_MS) {
+            if (stableState == HIGH && reading == LOW) {
+                btnPressTime = millis();
+            }
+
+            if (stableState == LOW && reading == HIGH) {
+                uint32_t pressDuration = millis() - btnPressTime;
+                EncoderEvent_t evt = (pressDuration >= 1000)
+                                     ? EVT_SELECT_LONG
+                                     : EVT_SELECT;
+                xQueueSend(encoderQueue, &evt, 0);
+            }
+
+            stableState = reading;
+        }
+
+        lastReadState = reading;
+
+        // Petite pause FreeRTOS
+        vTaskDelay(pdMS_TO_TICKS(3));
     }
-    else if (r == DIR_CCW) {
-      EncoderEvent_t evt = EVT_UP;
-      xQueueSend(encoderQueue, &evt, 0);
-    }
-
-    bool reading = digitalRead(ENCODER_BTN);
-
-    if (reading != lastReadState) {
-      lastDebounceTime = millis();
-    }
-
-    if ((millis() - lastDebounceTime)
-        > DEBOUNCE_MS) {
-
-      if (stableState == HIGH &&
-          reading == LOW) {
-        btnPressTime = millis();
-      }
-
-      if (stableState == LOW &&
-          reading == HIGH) {
-
-        uint32_t pressDuration =
-          millis() - btnPressTime;
-
-        EncoderEvent_t evt =
-          (pressDuration >= 1000)
-          ? EVT_SELECT_LONG
-          : EVT_SELECT;
-
-        xQueueSend(encoderQueue, &evt, 0);
-      }
-
-      stableState = reading;
-    }
-
-    lastReadState = reading;
-
-    vTaskDelay(pdMS_TO_TICKS(3));
-  }
 }
-
 
 // -------- Tâche MENU --------
 void menuTask(void *parameter) {
