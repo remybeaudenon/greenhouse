@@ -4,9 +4,6 @@
 // Création du Rotary et de la queue
 Rotary encoder(GPIO_ENC_DT, GPIO_ENC_CLK);
 
-//extern AppMode appMode ; 
-//QueueHandle_t encoderQueue = nullptr;
-
 // =========================================================
 //                     INIT
 // =========================================================
@@ -47,8 +44,8 @@ void taskRotaryEncoder(void* parameter) {
     const uint16_t DEBOUNCE_MS = 50;
     uint32_t lastDebounceTime = 0;
 
-    String taskName = pcTaskGetName(NULL) ; 
-    logTask(taskName,"▶️ started.");
+    //String taskName = pcTaskGetName(NULL) ; 
+    logfTask("▶️ started.");
 
     int lastPosition = encoder.getPosition();
 

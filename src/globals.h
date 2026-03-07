@@ -7,7 +7,25 @@
 #define MODE_AUTO   'A'
 #define MODE_MANU   'M'
 #define MODE_OFF    '0'
-#define MODE_FORCE  'F'
+//#define MODE_FORCE  'F'
+
+// ----------------------------------
+// DIGITAL GPIO FORCE BIT REGISTER  
+// ----------------------------------
+#define FORCE_FREE00_MASK    (1 << 0)
+#define FORCE_GPIO35_MASK    (1 << 1)
+#define FORCE_GPIO02_MASK    (1 << 2)
+#define FORCE_GPIO03_MASK    (1 << 3)
+#define FORCE_GPIO04_MASK    (1 << 4)
+#define FORCE_GPIO05_MASK    (1 << 5)
+#define FORCE_GPIO06_MASK    (1 << 6)
+
+// ----------------------------------
+// PWM  GPIO FORCE BIT REGISTER  
+// ----------------------------------
+#define FORCE_GPIO07_MASK    (1 << 7)
+
+
 // =========================================================
 //                     MODES APPLICATION
 // =========================================================
@@ -25,6 +43,8 @@ typedef struct {
 
 extern const ModeCtxMappings_t modeCtxMappings[];
 extern const uint8_t modeCtxMappingsCount;
+
+
 
 const char* getModeCtxLabel(char code);
 

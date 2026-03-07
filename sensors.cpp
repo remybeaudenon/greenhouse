@@ -2,6 +2,7 @@
 #include "HardwareSerial.h"
 #include <stdint.h>
 #include "src\sensors.h"
+#include "src\models.h"
 
 //extern TwoWire TwoWire_I2C1  ;
 TwoWire TwoWire_I2C1(1);        // 👉 TON bus séparé
@@ -20,8 +21,6 @@ I2C_Device_List I2C_devices[] = {
 BH1750          lightSensor(BH1750_addr);
 Adafruit_SHT31  tempHumSensor(&TwoWire_I2C1);
 
-char tmpBuffer[128];  
-
 // ----------------------------------------
 
 sensors_dataModel_t  sensor_dataModel = { 
@@ -31,14 +30,11 @@ sensors_dataModel_t  sensor_dataModel = {
     .counter = 0 
 };
 
-
-int sampling = 10 ;  // every 10 sec. 
+//int sampling =  cmdModel.samplingSensors  ;   
 
 // -- Functions 
 void initSensors() {
   
-//  char tmpBuffer[128];  
-
   TwoWire_I2C1.begin(GPIO_I2C_1_SDA, GPIO_I2C_1_SCL);
 
   for (int i = 0; i < DEVICE_COUNT; i++) {
@@ -47,12 +43,10 @@ void initSensors() {
   
     bool rc_ok = i2cLookup(addr) ;   
     if (rc_ok) {
-      snprintf(tmpBuffer, sizeof(tmpBuffer), "Main::initSensors ✅ I2C device [%s] available at addr: [0x%02X] ", name, addr );
+      logfTask("::initSensors ✅ I2C device [%s] available at addr: [0x%02X] ", name, addr );  
       I2C_devices[i].isAvailable = true ;
-      Serial.println(tmpBuffer) ; 
     } else {
-      snprintf(tmpBuffer, sizeof(tmpBuffer), "Main::initSensors ❌ I2C device [%s] not found at addr: [0x%02X] ", name, addr );
-      Serial.println(tmpBuffer) ; 
+      logfTask("Main::initSensors ❌ I2C device [%s] not found at addr: [0x%02X] ", name, addr );
     }
    
   }
@@ -66,7 +60,7 @@ bool i2cLookup(uint8_t address) {
 
 void startSensorsTask()
 {
-  xTaskCreate( taskSensors, "Sensors ", 4096, NULL, PRIORITY_LOW, NULL);
+  xTaskCreate( taskSensors, "Sensors", 4096, NULL, PRIORITY_LOW, NULL);
 }
 
 
@@ -80,20 +74,20 @@ void taskSensors(void *pvParameters)
   sensors_dataModel_t sensor_dataModel_backup = sensor_dataModel;
   char tmpBuffer[128];  //  temporary tmpBufferfer
 
-  String taskName = pcTaskGetName(NULL) ; 
-  logTask(taskName,"▶️ started.");
+  //String taskName = pcTaskGetName(NULL) ; 
+  logfTask("▶️ started.");
 
   // queue initialisation with empty data   
   xQueueOverwrite(queueSensorDataModel, &sensor_dataModel);
  
   if (lightSensor.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, BH1750_addr , &TwoWire_I2C1)) {
-        logTask(taskName, "BH1750 Configuration done." ) ;
+        logfTask("BH1750 Configuration done." ) ;
   } else {
-        logTask(taskName, "BH1750 Warning Configuration issue." ) ;
+        logfTask("BH1750 Warning Configuration issue." ) ;
   }
 
   if (!tempHumSensor.begin(SHT31_addr)) {
-    logTask(taskName, "SHT31 Warning !! not found.");
+    logfTask("SHT31 Warning !! not found.");
   }
 
   // ----------- Loop --------------
@@ -106,14 +100,14 @@ void taskSensors(void *pvParameters)
       int currentValue  = lightSensor.readLightLevel();
       if (sensor_dataModel_backup.lux  != currentValue ) 
       {
-        snprintf(tmpBuffer, sizeof(tmpBuffer), "%12s %4d --> %4d sampling: %d sec.", "Lux:", sensor_dataModel_backup.lux ,  currentValue, sampling);
-        logTask(taskName, tmpBuffer ) ;
+        logfTask("%12s %4d --> %4d sampling: %d sec.", "Lux:", sensor_dataModel_backup.lux ,  currentValue, cmdModel.samplingSensors);
+        //logTask(taskName, tmpBuffer ) ;
         sensor_dataModel.lux = currentValue ;
         sensor_dataModel.counter++ ;  
       }
     }
     else {
-      logTask(taskName, "LightSensor Not ready." ) ;
+      logfTask("LightSensor Not ready." ) ;
     }
 
     // --------- SHT31 Temperature Humidity
@@ -122,15 +116,15 @@ void taskSensors(void *pvParameters)
     {  // check if 'is not a number'
       if (fabs(sensor_dataModel_backup.temperature  - currentTemperatureValue) > 0.10f )  
       {
-        snprintf(tmpBuffer, sizeof(tmpBuffer), "%12s %4.1f --> %3.1f sampling: %d sec.","Temperature:" , sensor_dataModel_backup.temperature ,  currentTemperatureValue , sampling);
-        logTask(taskName, tmpBuffer ) ;
+        logfTask("%12s %4.1f --> %3.1f sampling: %d sec.","Temperature:" , sensor_dataModel_backup.temperature ,  currentTemperatureValue , cmdModel.samplingSensors);
+        //logTask(taskName, tmpBuffer ) ;
         sensor_dataModel.temperature  = currentTemperatureValue ;
         sensor_dataModel.counter++ ;  
       }
     }   
     else 
     { 
-      logTask(taskName, "WARNING Failed to read temperature.");
+      logfTask("WARNING Failed to read temperature.");
     }
 
     vTaskDelay(pdMS_TO_TICKS(250)); // smooth before read again  
@@ -141,29 +135,28 @@ void taskSensors(void *pvParameters)
       int currentHumidityValue = (int)round(value_f) ; 
       if (sensor_dataModel_backup.humidity  != currentHumidityValue ) 
       {
-        snprintf(tmpBuffer, sizeof(tmpBuffer), "%12s %4d --> %4d sampling: %d sec.","% Humidity:" , sensor_dataModel_backup.humidity ,  currentHumidityValue , sampling);
-        logTask(taskName, tmpBuffer ) ;
+        logfTask("%12s %4d --> %4d sampling: %d sec.","% Humidity:" , sensor_dataModel_backup.humidity ,  currentHumidityValue , cmdModel.samplingSensors);
+        //logTask(taskName, tmpBuffer ) ;
         sensor_dataModel.humidity  = currentHumidityValue ;
         sensor_dataModel.counter++ ;  
       }  
     } else 
     { 
-      logTask(taskName, "WARNING Failed to read humidity.");
+      logfTask("WARNING Failed to read humidity.");
     }
     
     // -- DataModel Update 
     if (sensor_dataModel_backup.counter != sensor_dataModel.counter ) 
     {
       xQueueOverwrite(queueSensorDataModel, &sensor_dataModel);
-      snprintf(tmpBuffer, sizeof(tmpBuffer), "OverWrite Rtos sensors_dataModel queue ID: %03d" ,sensor_dataModel.counter ) ; 
-      logTask(taskName, tmpBuffer ) ;
+      logfTask("OverWrite Rtos sensors_dataModel queue ID: %03d" ,sensor_dataModel.counter ) ; 
+      //logTask(taskName, tmpBuffer ) ;
       sensor_dataModel_backup = sensor_dataModel ; 
     }
     
-    vTaskDelay(pdMS_TO_TICKS(sampling * 1000));
+    vTaskDelay(pdMS_TO_TICKS(cmdModel.samplingSensors * 1000));
   } // end While 
 }
-
 
 /* --- for I2C DEBUG purpose --- 
 String scanI2C(TwoWire &wireBus) {

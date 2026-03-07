@@ -1,4 +1,4 @@
-#include <RadioLib.h>
+//#include <RadioLib.h>
 
 /*
   Polytech Connected Greenhouse Project   
@@ -30,30 +30,34 @@
 #include "src\gpio.h" 
 #include "src\globals.h"
 #include "src\RTOSQueues.h"
+#include "src\logger.h"
+#include "src\blinker.h"
 #include "src\plc.h"
 #include "src\sensors.h"
 #include "src\rotaryEncoder.h"
 #include "src\displayCtrl.h"
+#include "src\mqtt.h"
 
-const char* APP_VERSION = "VERSION 1.2.0";
+
+const char* APP_VERSION = "VERSION 1.4.5";
 
 //init for future LoRa use ... 
-SX1262 radio = new Module(8, 14, 12, 13);
+//SX1262 radio = new Module(8, 14, 12, 13);
 
 void setup() {
 
   Serial.begin(115200);
   delay(500);
 
-  Serial.print("--------greenhouse.ino started ");
-  Serial.print(APP_VERSION);
-  Serial.println("--------");
+  logfTask("##########################################################") ; 
+  logfTask("# ---- greenhouse.ino started Version: %7s --- #" , APP_VERSION) ; 
+  logfTask("##########################################################") ; 
   
   initGPIO();
-  Serial.println ("Main::setup initGPIO() completed.");
 
   // -- RTOS Queues   ---- 
   createQueues();
+
 
   // -- Rotary Encode -------- 
   initRotaryEncoder(); 
@@ -67,11 +71,18 @@ void setup() {
   initSensors(); 
   startSensorsTask() ;
   
+  initBlinker() ; 
+  startBlinkerTask() ; 
+
   // -- PLC Logic Control ---- 
   initPLC(); 
   startPLCTask();  
 
-  Serial.println("Main::setup 🟢 completed Ready !! 🟢 ");
+  // -- PLC Logic Control ---- 
+  initMqtt(); 
+  startMqttTask();  
+
+  logfTask("🟢 Setup Completed !! 🟢 ");
 
 }
 

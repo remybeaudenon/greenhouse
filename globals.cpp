@@ -7,6 +7,7 @@ const ModeCtxMappings_t modeCtxMappings[] = {
     {'F', "Mode Force"}
 };
 
+
 const uint8_t modeCtxMappingsCount = sizeof(modeCtxMappings)/sizeof(modeCtxMappings[0]);
 
 const char* getModeCtxLabel(char code) {
@@ -17,3 +18,12 @@ const char* getModeCtxLabel(char code) {
     }
     return "unknown mode";
 }
+
+
+
+
+
+
+
+
+
