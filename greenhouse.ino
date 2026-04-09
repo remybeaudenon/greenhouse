@@ -1,5 +1,5 @@
 //#include <RadioLib.h>
-
+//#include <esp_now.h>
 /*
   Polytech Connected Greenhouse Project   
 
@@ -29,6 +29,7 @@
 */
 #include "src\gpio.h" 
 #include "src\globals.h"
+#include "src\models.h"
 #include "src\RTOSQueues.h"
 #include "src\logger.h"
 #include "src\blinker.h"
@@ -38,8 +39,9 @@
 #include "src\displayCtrl.h"
 #include "src\mqtt.h"
 
+#include <Arduino.h>
 
-const char* APP_VERSION = "VERSION 1.4.5";
+const char* APP_VERSION = "VERSION 1.5.0";
 
 //init for future LoRa use ... 
 //SX1262 radio = new Module(8, 14, 12, 13);
@@ -54,10 +56,13 @@ void setup() {
   logfTask("##########################################################") ; 
   
   initGPIO();
+  
+  // -- DataModel Init ---- 
+  cmdModel.load() ; 
+  sensorsModel.load() ; 
 
   // -- RTOS Queues   ---- 
   createQueues();
-
 
   // -- Rotary Encode -------- 
   initRotaryEncoder(); 

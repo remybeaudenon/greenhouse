@@ -90,9 +90,16 @@ void connectWiFi() {
     vTaskDelay(pdMS_TO_TICKS(2000));
     logfTask("Waiting ...");
   }
-  logfTask("🟢 Connected using IP:[%s]  rssi: [%d]", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+  logfTask("🟢 Connected using IP:[%s] channel:[%d] rssi: [%d]", WiFi.localIP().toString().c_str(), WiFi.channel() ,WiFi.RSSI());
 }
 
+
+/*
+  exemple ==> mosquitto_pub -t "greenhouse/mcu/cmd" -m '{"samplingSensors" : 30  }'
+  Check message
+  Update cmdModel
+  
+*/
 void processMqttQueueMessage() 
 {
   MqttMessage_t msg;
@@ -177,6 +184,8 @@ void processMqttQueueMessage()
       cmdModel.modelDirty = true ; 
     }
 
+     if (cmdModel.modelDirty ) 
+          cmdModel.save(); 
     logfTask("cmdModel %s", ( cmdModel.modelDirty ? "updated." : "⚠  no update." ));
 
   } 
@@ -194,7 +203,7 @@ void processMqttQueueMessage()
 
     uint8_t gpio  = doc["gpio"].as<uint8_t>();
     bool force    = doc.containsKey("force") ? doc["force"].as<bool>() : false;
-    uint8_t value = doc.containsKey("value") ? doc["value"].as<uint8_t>() : 0;
+    uint8_t value = doc.containsKey("value") ? doc["value"].as<uint8_t>() : 0 ;
 
     const uint8_t allowedGPIOs[] = {3,4,5,6,7,35};
     bool valid = false;
@@ -224,9 +233,10 @@ void processMqttQueueMessage()
        gpio = 1;
 
       applyForceDigitalGPIO(gpio, force, value);
-      logfTask("Force Enabled:[0x%02X] Value:[0x%02X]",  cmdModel.digital_force_enable, cmdModel.digital_force_value);
+      logfTask("%s Digital gpio %i Enabled:[0x%02X] Value:[0x%02X]", (force ? "Force" : "UnForce") , gpio ,  cmdModel.digital_force_enable, cmdModel.digital_force_value);
     }
-    cmdModel.modelDirty = true ; 
+    cmdModel.modelDirty = true ;
+    cmdModel.save();  
   }
 }
 
@@ -236,7 +246,6 @@ void applyForceDigitalGPIO(uint8_t gpio, bool force, uint8_t value)
     if (gpio > 7) return;
 
     uint8_t mask = (1 << gpio);
-
     if (force)
     {
         // active le forçage pour ce bit
@@ -378,7 +387,7 @@ void taskMqtt(void *pvParameters)
         if (cmdModel.modelDirty)
         {
           cmdModel.rssi = WiFi.RSSI() ; 
-          String aJson = cmdModelToJson(&cmdModel);
+          String aJson = cmdModel.toJson() ;               // cmdModelToJson(&cmdModel);
           client.publish(mqttCmdDataTopic, aJson.c_str());  
           logfTask("Publish new data on topic: [%s] ",mqttCmdDataTopic );
           cmdModel.modelDirty = false ; 
@@ -386,7 +395,7 @@ void taskMqtt(void *pvParameters)
                 
         if(sensorsModel.modelDirty)
         {
-          String json = sensorsModelToJson(&sensorsModel);
+          String json =  sensorsModel.toJson() ;   //sensorsModelToJson(&sensorsModel);
           client.publish(mqttSensorsDataTopic, json.c_str());  
           logfTask("Publish new data on topic: %s",mqttSensorsDataTopic );
           sensorsModel.modelDirty = false ; 
