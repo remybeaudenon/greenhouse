@@ -23,34 +23,45 @@ Energy Constraints
 NE FONCTIONNE PAS !! 
 greenhouse/                  <- racine du projet
 │
-├─ src/                      <- tous les fichiers sources
+├─ src/                      <- tous les fichiers header sources
+│   ├─ blinker.h             
+│   ├─ displayCtrl.h                
+│   ├─ globals.h                
+│   ├─ gpio.h                
+│   ├─ logger.h                
+│   ├─ models.h            
+│   ├─ mqtt.h            
+│   ├─ plc.h            
+│   ├─ rotaryEncoder.h            
+│   ├─ RTOSQueues.h            
+│   ├─ sensors.h            
+│
+├─ /                      <- tous les fichiers sources
 │   ├─ greenhouse.ino        <- setup minimal, lance les tasks
-│   ├─ globals.h             <- variables globales, queues, menu, BH1750, OLED, Rotary
-│   ├─ gpio.h                <- toutes les pins + initGPIO()
-│   └─ tasks/                <- toutes les tasks RTOS
-│       ├─ ledTask.h
-│       ├─ ledTask.cpp
-│       ├─ encoderTask.h
-│       ├─ encoderTask.cpp
-│       ├─ menuTask.h
-│       ├─ menuTask.cpp
-│       ├─ bh1750Task.h
-│       └─ bh1750Task.cpp
+│   ├─ other packages.cpp
 │
 └─ (optionnel) libraries/    <- si tu as des libs locales ou modifiées
 
-  Connected Greenhouse 
-
+Polytech Connected Greenhouse Project 02/2026   
    MCU : Heltec  [Wifi LoRa 32(V3)]  
 
-   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\Kit Etudiant\HELTECV3  
+   IIDE : Aduino IDE 2.3.10
+   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\MCU\HELTECV3  
    additional borad : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp2‌​32_index.json
-   Libraries  HELTECV3\libraries\Rotary                   url=https://github.com/skathir38/Rotary 
-                                \BH1750                   url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
-                                \Heltec ESP32 Dev-Boards  url=https://github.com/HelTecAutomation/Heltec_ESP32.git
-                                                            NOTA: Remove BH1750 to avoid conflict       
-  VERSION 1.0.0 
+   Libraries  HELTECV3\libraries\Rotary                     url=https://github.com/skathir38/Rotary 
+                                \BH1750                     url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
+                                \SHT31                      url=https://github.com/adafruit/Adafruit_SHT31
+                                \Heltec ESP32 Dev-Boards    url=https://github.com/HelTecAutomation/Heltec_ESP32.git
+                                 NOTA: Remove BH1750.cpp .h  to avoid conflict       
+                                \HT_SSD1306Wire
+  -- Keys feature --  
+  FreeRTOS (tasks, queues)
+  I2C secondaire
+  OLED Heltec spécifique
+  BH1750
+  FS400-SHT31 
+  encodeur rotatif
+  logique “PLC”
 
-
-
-
+  logs: Serial Output 155200 bauds 
+  
