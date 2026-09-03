@@ -5,6 +5,7 @@
 #include <freertos/queue.h>
 
 #include "globals.h"
+#include "models.h"
 
 // =========================================================
 //              FILES DE COMMUNICATION RTOS

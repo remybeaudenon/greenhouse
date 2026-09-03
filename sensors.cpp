@@ -2,7 +2,6 @@
 #include "HardwareSerial.h"
 #include <stdint.h>
 #include "src\sensors.h"
-#include "src\models.h"
 
 //extern TwoWire TwoWire_I2C1  ;
 TwoWire TwoWire_I2C1(1);        // 👉 TON bus séparé
@@ -21,16 +20,7 @@ I2C_Device_List I2C_devices[] = {
 BH1750          lightSensor(BH1750_addr);
 Adafruit_SHT31  tempHumSensor(&TwoWire_I2C1);
 
-// ----------------------------------------
-
-sensors_dataModel_t  sensor_dataModel = { 
-    .lux = 0.0f,
-    .humidity = 0,
-    .temperature = 0.0f,
-    .counter = 0 
-};
-
-//int sampling =  cmdModel.samplingSensors  ;   
+int counter,counterBackup  = 0 ; 
 
 // -- Functions 
 void initSensors() {
@@ -48,8 +38,9 @@ void initSensors() {
     } else {
       logfTask("Main::initSensors ❌ I2C device [%s] not found at addr: [0x%02X] ", name, addr );
     }
-   
   }
+  sensorsModel.load() ; 
+
 }
 
 bool i2cLookup(uint8_t address) {
@@ -71,60 +62,56 @@ void startSensorsTask()
 // =========================================================
 void taskSensors(void *pvParameters)  
 {
-  sensors_dataModel_t sensor_dataModel_backup = sensor_dataModel;
-  char tmpBuffer[128];  //  temporary tmpBufferfer
 
-  //String taskName = pcTaskGetName(NULL) ; 
   logfTask("▶️ started.");
-
-  // queue initialisation with empty data   
-  xQueueOverwrite(queueSensorDataModel, &sensor_dataModel);
+  
+  xQueueOverwrite(queueSensorDataModel, &sensorsModel);
  
   if (lightSensor.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, BH1750_addr , &TwoWire_I2C1)) {
-        logfTask("BH1750 Configuration done." ) ;
+        logfTask("🟢 BH1750 Light sensor Configuration done." ) ;
   } else {
-        logfTask("BH1750 Warning Configuration issue." ) ;
+        logfTask("🟡 BH1750 Light Sensor Warning Configuration issue." ) ;
   }
 
   if (!tempHumSensor.begin(SHT31_addr)) {
-    logfTask("SHT31 Warning !! not found.");
+    logfTask("🟡 SHT31 Temp. Humidity Sensor Warning !! not found.");
   }
 
   // ----------- Loop --------------
   while (true) 
   {
 
-  // ---------Ambient Light 
+  //logfTask("⚙️  DEBUG [sensorsModel] Properties:  %s ", sensorsModel.toJson().c_str() );
+
+  // -------- Ambient Light BH1750 --------- 
     if (lightSensor.measurementReady())
     {
       int currentValue  = lightSensor.readLightLevel();
-      if (sensor_dataModel_backup.lux  != currentValue ) 
+      if (sensorsModel.bh1750_light  != currentValue ) 
       {
-        logfTask("%12s %4d --> %4d sampling: %d sec.", "Lux:", sensor_dataModel_backup.lux ,  currentValue, cmdModel.samplingSensors);
-        //logTask(taskName, tmpBuffer ) ;
-        sensor_dataModel.lux = currentValue ;
-        sensor_dataModel.counter++ ;  
+        logfTask("%12s %4d --> %4d sampling: %d sec.", "Lux:", sensorsModel.bh1750_light ,  currentValue, cmdModel.samplingSensors);
+        sensorsModel.bh1750_light  = currentValue ;
+        counter++ ;  
       }
     }
     else {
-      logfTask("LightSensor Not ready." ) ;
+      logfTask("🟡 BH1750 LightSensor Not ready." ) ;
     }
 
     // --------- SHT31 Temperature Humidity
     float currentTemperatureValue  = tempHumSensor.readTemperature();
-    if (! isnan(currentTemperatureValue)) 
-    {  // check if 'is not a number'
-      if (fabs(sensor_dataModel_backup.temperature  - currentTemperatureValue) > 0.10f )  
+    if (! isnan(currentTemperatureValue)) // check if 'is not a number'
+    {
+      if (fabs(sensorsModel.sht31_temperature  - currentTemperatureValue) > 0.10f )  
       {
-        logfTask("%12s %4.1f --> %3.1f sampling: %d sec.","Temperature:" , sensor_dataModel_backup.temperature ,  currentTemperatureValue , cmdModel.samplingSensors);
-        //logTask(taskName, tmpBuffer ) ;
-        sensor_dataModel.temperature  = currentTemperatureValue ;
-        sensor_dataModel.counter++ ;  
+        logfTask("%12s %4.1f --> %4.1f sampling: %d sec.","Temperature:" , sensorsModel.sht31_temperature ,  currentTemperatureValue , cmdModel.samplingSensors);
+        sensorsModel.sht31_temperature  = currentTemperatureValue ;
+        counter++ ;  
       }
     }   
     else 
     { 
-      logfTask("WARNING Failed to read temperature.");
+      logfTask("🟡 WARNING Failed to read SHT31 temperature.");
     }
 
     vTaskDelay(pdMS_TO_TICKS(250)); // smooth before read again  
@@ -133,27 +120,27 @@ void taskSensors(void *pvParameters)
     if (! isnan(value_f) ) 
     {  
       int currentHumidityValue = (int)round(value_f) ; 
-      if (sensor_dataModel_backup.humidity  != currentHumidityValue ) 
+      if (sensorsModel.sht31_humidity  != currentHumidityValue ) 
       {
-        logfTask("%12s %4d --> %4d sampling: %d sec.","% Humidity:" , sensor_dataModel_backup.humidity ,  currentHumidityValue , cmdModel.samplingSensors);
-        //logTask(taskName, tmpBuffer ) ;
-        sensor_dataModel.humidity  = currentHumidityValue ;
-        sensor_dataModel.counter++ ;  
+        logfTask("%12s %4d --> %4d sampling: %d sec.","% Humidity:" , sensorsModel.sht31_humidity ,  currentHumidityValue , cmdModel.samplingSensors);
+        sensorsModel.sht31_humidity  = currentHumidityValue ;
+        counter++ ;  
       }  
     } else 
     { 
-      logfTask("WARNING Failed to read humidity.");
+      logfTask("🟡 WARNING Failed to read SHT31 humidity.");
     }
     
     // -- DataModel Update 
-    if (sensor_dataModel_backup.counter != sensor_dataModel.counter ) 
+    if (counterBackup != counter ) 
     {
-      xQueueOverwrite(queueSensorDataModel, &sensor_dataModel);
-      logfTask("OverWrite Rtos sensors_dataModel queue ID: %03d" ,sensor_dataModel.counter ) ; 
-      //logTask(taskName, tmpBuffer ) ;
-      sensor_dataModel_backup = sensor_dataModel ; 
+      xQueueOverwrite(queueSensorDataModel, &sensorsModel);
+      logfTask("OverWrite Rtos sensors_dataModel queue ID: %03d" , counter ) ; 
+      //sensorsModel_backup = sensorsModel ; 
+      sensorsModel.modelDirty  = true ; 
+      sensorsModel.save() ; 
+      counterBackup = counter ; 
     }
-    
     vTaskDelay(pdMS_TO_TICKS(cmdModel.samplingSensors * 1000));
   } // end While 
 }

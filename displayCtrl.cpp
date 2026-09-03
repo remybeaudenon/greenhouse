@@ -56,10 +56,11 @@ void startDisplayCtrlTask(void) {
 // =========================================================
 void drawMenu() {
 
-  sensors_dataModel_t sensors_dataModel , sensors_dataModel_q = {0} ;
+  //sensors_dataModel_t sensors_dataModel , sensors_dataModel_q = {0} ;
+  GreenhouseSensorsModel_t sensorsModelView , sensorsModelView_q = {0} ; 
 
-  if ( queueSensorDataModel != nullptr  and  xQueuePeek(queueSensorDataModel, &sensors_dataModel_q, 0) == pdTRUE )
-   sensors_dataModel = sensors_dataModel_q ; 
+  if ( queueSensorDataModel != nullptr  and  xQueuePeek(queueSensorDataModel, &sensorsModelView_q, 0) == pdTRUE )
+   sensorsModelView = sensorsModelView_q ; 
   
   display.clear();
 
@@ -72,7 +73,7 @@ void drawMenu() {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
 
   char buf[50];
-  sprintf(buf, "%5d Lux | %3.1f° | %2d%% RH", sensors_dataModel.lux, sensors_dataModel.temperature, sensors_dataModel.humidity);
+  sprintf(buf, "%5d Lux | %3.1f° | %2d%% RH", sensorsModelView.bh1750_light, sensorsModelView.sht31_temperature, sensorsModelView.sht31_humidity);
   display.drawString(4, 2, buf);
 
   // ----- ZONE MENU -----

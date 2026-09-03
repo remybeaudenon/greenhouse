@@ -7,7 +7,10 @@
 #include "globals.h"
 #include "RTOSQueues.h"
 #include "gpio.h"
-#include "src\logger.h"
+#include "logger.h"
+#include "models.h"
+#include "blinker.h"
+
 
 
 extern AppMode appMode ; 

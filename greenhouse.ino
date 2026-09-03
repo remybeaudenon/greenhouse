@@ -1,18 +1,15 @@
-//#include <RadioLib.h>
-//#include <esp_now.h>
 /*
-  Polytech Connected Greenhouse Project   
-
+  Polytech Connected Greenhouse Project 02/2026   
    MCU : Heltec  [Wifi LoRa 32(V3)]  
 
-   IIDE : Aduino IDE 2.3.7 
-   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\Kit Etudiant\HELTECV3  
+   IIDE : Aduino IDE 2.3.10
+   preferences: c:\Users\remyb\Google Drive\MyProjects\Ecole IOT Polytech\MCU\HELTECV3  
    additional borad : https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp2‌​32_index.json
    Libraries  HELTECV3\libraries\Rotary                     url=https://github.com/skathir38/Rotary 
                                 \BH1750                     url=https://github.com/claws/BH1750 ( use for dedicated Physical I2C Wire )
                                 \SHT31                      url=https://github.com/adafruit/Adafruit_SHT31
                                 \Heltec ESP32 Dev-Boards    url=https://github.com/HelTecAutomation/Heltec_ESP32.git
-                            NOTA: Remove BH1750 to avoid conflict       
+                                 NOTA: Remove BH1750.cpp .h  to avoid conflict       
                                 \HT_SSD1306Wire
   -- Keys feature --  
   FreeRTOS (tasks, queues)
@@ -22,9 +19,10 @@
   FS400-SHT31 
   encodeur rotatif
   logique “PLC”
+
+  logs: Serial Output 155200 bauds 
     
-  VERSION ==> Line 38
-  2/02/2026 
+  VERSION ==> Line 44
   clean up folder ==> C:\Users\remyb\AppData\Local\arduino\sketches\669A8ABA8C4B022958FBAB0FD3A038F8\sketch\
 */
 #include "src\gpio.h" 
@@ -41,7 +39,11 @@
 
 #include <Arduino.h>
 
-const char* APP_VERSION = "VERSION 1.5.0";
+//#include <RadioLib.h>
+//#include <esp_now.h>
+
+
+const char* APP_VERSION = "VERSION 2.0.1";
 
 //init for future LoRa use ... 
 //SX1262 radio = new Module(8, 14, 12, 13);
@@ -59,7 +61,6 @@ void setup() {
   
   // -- DataModel Init ---- 
   cmdModel.load() ; 
-  sensorsModel.load() ; 
 
   // -- RTOS Queues   ---- 
   createQueues();
@@ -83,7 +84,7 @@ void setup() {
   initPLC(); 
   startPLCTask();  
 
-  // -- PLC Logic Control ---- 
+  // -- WiFi MQTT ---- 
   initMqtt(); 
   startMqttTask();  
 

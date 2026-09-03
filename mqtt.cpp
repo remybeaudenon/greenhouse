@@ -1,18 +1,11 @@
 #include "src\mqtt.h"
 #include "src\models.h"
 
-// === WiFi Config  =====
-const char* ssid       = "HUAWEI-B525-60FD";
-const char* password   = "SFR-4G-SURF";
 int wifiStatus = WL_IDLE_STATUS;
-
-// === MQTT Config  =====
-const char* mqttServer = "PI5-IOT-EDGE-U25.local" ; // 192.168.8.128";
-const int   mqttPort   = 1883;
 
 // === Publish Topics 
 const char* mqttSensorsDataTopic  = "greenhouse/mcu/sensors_data";
-const char* mqttCmdDataTopic  = "greenhouse/mcu/cmd_data";
+const char* mqttCmdDataTopic      = "greenhouse/mcu/cmd_data";
 
 // === Subscribe Topics 
 const char* mqttSubscribeTopics[] = {
@@ -28,14 +21,13 @@ enum {
 const int mqttSubscribeTopicCount = sizeof(mqttSubscribeTopics) / sizeof(mqttSubscribeTopics[0]);
 
 // ---Will Payload 
-const char* mqttStateTopic    = "greenhouse/mcu/state";
+const char* mqttStateTopic             = "greenhouse/mcu/state";
 const char* mqttWillPayloadOffline     = "offline";
 const char* mqttWillPayloadOnline      = "online";
 
 QueueHandle_t mqttMsgQueue;
 
 McuSystemState mcuState = MCU_WIFI_CONNECTING;
-// char mqttTmpBuffer[128];  //  temporary mqttTmpBuffer
 
 // ===== OBJETS =====
 WiFiClient espClient;
@@ -45,8 +37,11 @@ PubSubClient client(espClient);
 void initMqtt() {
 
  WiFi.mode(WIFI_STA);
+ WiFi.disconnect();  // clean reset 
 
- mqttMsgQueue = xQueueCreate(3, sizeof(MqttMessage_t));  // 3 messagess in buffer
+ mqttConfig.load() ; // from Preferences see models.h 
+ 
+  mqttMsgQueue = xQueueCreate(3, sizeof(MqttMessage_t));  // 3 messagess in buffer
  if (mqttMsgQueue == NULL) {
     Serial.println("Failed to create RTOS MQTT queue!");
     while (1);  //  Stop !! 
@@ -82,10 +77,24 @@ void connectWiFi() {
   if (WiFi.status() == WL_CONNECTED)
     return;
   
-  logfTask("Attempting to connect to SSID: [%s]", ssid) ;  
+  vTaskDelay(pdMS_TO_TICKS(100));
 
-  WiFi.begin(ssid, password);
+  logfTask("📥 connectWiFi() Scan WiFi SSID ") ;  
 
+  int n = WiFi.scanNetworks();
+  if (n == 0) {
+    logfTask("📥 connectWiFi() No WiFi available ") ;  
+  } else {
+    logfTask("📥 connectWiFi() [%d] SSID found." , n ) ;  
+    for (int i = 0; i < n; ++i) {
+      String ssidScan = WiFi.SSID(i);
+      logfTask("📥 connectWiFi() SSID --> [%s]" , ssidScan.c_str() ) ;  
+    }
+  }
+
+  logfTask("Attempting to connect to SSID: [%s] pass:[%s] ", mqttConfig.wifi_ssid, mqttConfig.wifi_password ) ;  
+
+  WiFi.begin(mqttConfig.wifi_ssid, mqttConfig.wifi_password);
   while (WiFi.status() != WL_CONNECTED) {
     vTaskDelay(pdMS_TO_TICKS(2000));
     logfTask("Waiting ...");
@@ -117,7 +126,6 @@ void processMqttQueueMessage()
   // ================================
   // MQTT WILL STATE
   // ================================
-  //if (strcmp(msg.topic, mqttStateTopic) == 0)
   if (strcmp(msg.topic, mqttSubscribeTopics[TOPIC_STATE]) == 0) 
   {
     if (strcmp(payloadBuffer, mqttWillPayloadOffline) == 0)
@@ -306,7 +314,7 @@ void startMqttTask(){
 // =========================================================
 void taskMqtt(void *pvParameters)
 {
-  client.setServer(mqttServer, mqttPort);
+  client.setServer(mqttConfig.server, mqttConfig.port);
   client.setBufferSize(512);  // increase Payload size > 230 bytes 
   client.setCallback(onMessageReceived);
 
@@ -336,7 +344,7 @@ void taskMqtt(void *pvParameters)
 
       case MCU_MQTT_CONNECTING:
       {
-        logfTask("Attempting to connect to  [%s] MQTT broker." , mqttServer  );
+        logfTask("Attempting to connect to  [%s:%i] MQTT broker." , mqttConfig.server ,mqttConfig.port );
 
         String clientId = "HeltecV3-Client-";
         clientId += String(random(0xffff), HEX);
@@ -386,8 +394,8 @@ void taskMqtt(void *pvParameters)
 
         if (cmdModel.modelDirty)
         {
-          cmdModel.rssi = WiFi.RSSI() ; 
-          String aJson = cmdModel.toJson() ;               // cmdModelToJson(&cmdModel);
+          //mqttConfig.rssi = WiFi.RSSI() ; 
+          String aJson = cmdModel.toJson() ;         
           client.publish(mqttCmdDataTopic, aJson.c_str());  
           logfTask("Publish new data on topic: [%s] ",mqttCmdDataTopic );
           cmdModel.modelDirty = false ; 
@@ -395,13 +403,13 @@ void taskMqtt(void *pvParameters)
                 
         if(sensorsModel.modelDirty)
         {
-          String json =  sensorsModel.toJson() ;   //sensorsModelToJson(&sensorsModel);
+          String json =  sensorsModel.toJson() ;   
           client.publish(mqttSensorsDataTopic, json.c_str());  
           logfTask("Publish new data on topic: %s",mqttSensorsDataTopic );
           sensorsModel.modelDirty = false ; 
         }
 
-        if (currentMillis - previousMillis >= 60000 ) 
+        if (currentMillis - previousMillis >= 300000 ) 
         {
           sensorsModel.modelDirty = true; 
           cmdModel.modelDirty = true  ;

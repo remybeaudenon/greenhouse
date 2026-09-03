@@ -1,0 +1,819 @@
+[
+    {
+        "id": "54fb08638ec30cb9",
+        "type": "tab",
+        "label": "Zigbee2MQTT",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "445503803795d0d6",
+        "type": "tab",
+        "label": "Data Model MCU",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d777b42973a5dfe3",
+        "type": "mqtt-broker",
+        "name": "MOSQUITTO BROKER",
+        "broker": "localhost",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "b8a1595147d2691f",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "Arial Black,Arial Black,Gadget,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "Arial Black,Arial Black,Gadget,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "b5c693ba345bc0cd",
+        "type": "ui_tab",
+        "name": "ZIGBEE Sensors ",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "09b04ec6dfc06fe0",
+        "type": "ui_group",
+        "name": "Capteur ZS-304Z",
+        "tab": "b5c693ba345bc0cd",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": true,
+        "className": ""
+    },
+    {
+        "id": "993f7a7e67f7abc6",
+        "type": "influxdb3-config",
+        "name": "DATA-NODERED DS",
+        "host": "http://PI5-IOT-EDGE-U25:8181",
+        "database": "DATA-NODERED",
+        "tlsRejectUnauthorized": true,
+        "caCertPath": ""
+    },
+    {
+        "id": "03b410b4aed7d127",
+        "type": "global-config",
+        "env": [
+            {
+                "name": "DATA-MODEL",
+                "value": "{\"fan\":false,\"led\":false,\"rh_max\":85,\"heater\":0,\"ctx_mode\":\"A\"}",
+                "type": "json"
+            },
+            {
+                "name": "TOPIC_MCU_STATE",
+                "value": "nodered/mcu/state",
+                "type": "str"
+            }
+        ],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-contrib-influxdb3": "1.0.3",
+            "node-red-contrib-influxdb3-read": "1.0.2"
+        }
+    },
+    {
+        "id": "3e20dd873e38c412",
+        "type": "debug",
+        "z": "54fb08638ec30cb9",
+        "name": "debug 1",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "6eb7d4decaa6eef7",
+        "type": "mqtt in",
+        "z": "54fb08638ec30cb9",
+        "name": "Soil Moisture ZS-304Z",
+        "topic": "zigbee2mqtt/soil-moisture-zs-304z",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "d777b42973a5dfe3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 40,
+        "wires": [
+            [
+                "3e20dd873e38c412",
+                "d9767bd7cd6dfc7d",
+                "9e3597106deed043",
+                "56d453c71b3eece1"
+            ]
+        ]
+    },
+    {
+        "id": "a2fdf5d435bff0c0",
+        "type": "ui_gauge",
+        "z": "54fb08638ec30cb9",
+        "name": "Soil Moisture",
+        "group": "09b04ec6dfc06fe0",
+        "order": 3,
+        "width": 4,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Humidité du sol",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#b30000",
+            "#e6e600",
+            "#3ccb3a"
+        ],
+        "seg1": "30",
+        "seg2": "60",
+        "diff": false,
+        "className": "",
+        "x": 530,
+        "y": 140,
+        "wires": [],
+        "inputLabels": [
+            "soil_moisture"
+        ]
+    },
+    {
+        "id": "d9767bd7cd6dfc7d",
+        "type": "function",
+        "z": "54fb08638ec30cb9",
+        "name": "function 1",
+        "func": "if (typeof msg.payload === \"string\") {\n    msg.payload = JSON.parse(msg.payload);\n}\n\nif (msg.payload.soil_moisture !== undefined) {\n    msg.payload = Number(msg.payload.soil_moisture);\n    return msg;\n}\n\nreturn null; // Ignore message si valeur absente\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 120,
+        "wires": [
+            [
+                "a2fdf5d435bff0c0",
+                "827f1d4c5d380095"
+            ]
+        ],
+        "outputLabels": [
+            "Out 1"
+        ]
+    },
+    {
+        "id": "a18224ba30582d6b",
+        "type": "ui_gauge",
+        "z": "54fb08638ec30cb9",
+        "name": "Température",
+        "group": "09b04ec6dfc06fe0",
+        "order": 1,
+        "width": 4,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#5000b3",
+            "#00e658",
+            "#cbb23a"
+        ],
+        "seg1": "20",
+        "seg2": "35",
+        "diff": false,
+        "className": "",
+        "x": 530,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "9e3597106deed043",
+        "type": "function",
+        "z": "54fb08638ec30cb9",
+        "name": "function 2",
+        "func": "if (typeof msg.payload === \"string\") {\n    msg.payload = JSON.parse(msg.payload);\n}\n\nif (msg.payload.temperature !== undefined) {\n    msg.payload = Number(msg.payload.temperature);\n    return msg;\n}\n\nreturn null; // Ignore message si valeur absente\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "a18224ba30582d6b"
+            ]
+        ]
+    },
+    {
+        "id": "56d453c71b3eece1",
+        "type": "function",
+        "z": "54fb08638ec30cb9",
+        "name": "function 3",
+        "func": "if (typeof msg.payload === \"string\") {\n    msg.payload = JSON.parse(msg.payload);\n}\n\nif (msg.payload.humidity !== undefined) {\n    msg.payload = Number(msg.payload.humidity);\n    return msg;\n}\n\nreturn null; // Ignore message si valeur absente\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 200,
+        "wires": [
+            [
+                "aa38777dd561670f"
+            ]
+        ]
+    },
+    {
+        "id": "aa38777dd561670f",
+        "type": "ui_gauge",
+        "z": "54fb08638ec30cb9",
+        "name": "Humidité",
+        "group": "09b04ec6dfc06fe0",
+        "order": 2,
+        "width": 4,
+        "height": 3,
+        "gtype": "gage",
+        "title": "Humidité",
+        "label": "% RH",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#f2cb40",
+            "#00e658",
+            "#1b41da"
+        ],
+        "seg1": "40",
+        "seg2": "60",
+        "diff": false,
+        "className": "",
+        "x": 520,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "827f1d4c5d380095",
+        "type": "ui_chart",
+        "z": "54fb08638ec30cb9",
+        "name": "Soil Humidity",
+        "group": "09b04ec6dfc06fe0",
+        "order": 4,
+        "width": 8,
+        "height": 4,
+        "label": "Soil Moisture",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "D/M",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": true,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "1000",
+        "removeOlderUnit": "604800",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#9ec5e0",
+            "#b5e8d7",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 530,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c82a6b824dc23fc9",
+        "type": "ui_text",
+        "z": "54fb08638ec30cb9",
+        "group": "09b04ec6dfc06fe0",
+        "order": 5,
+        "width": 4,
+        "height": 2,
+        "name": "water_warning",
+        "label": "Water_warning",
+        "format": "{{value | uppercase}}",
+        "layout": "col-center",
+        "className": "",
+        "style": false,
+        "font": "Arial Black,Arial Black,Gadget,sans-serif",
+        "fontSize": "20",
+        "color": "#000000",
+        "x": 540,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "05c142028349c498",
+        "type": "function",
+        "z": "445503803795d0d6",
+        "name": "[mcu_state] Updater",
+        "func": "let mcu_state = global.get(\"mcu_state\");\n\nif (!mcu_state) {\n    let model = global.get(\"DATA-MODEL\");\n    mcu_state = model ? JSON.parse(model) : {};\n}\nif (msg.topic === \"INIT\") \n{\n    if (Array.isArray(msg.payload) && msg.payload.length === 1) {\n        global.set(\"mcu_state\", msg.payload[0]);\n        msg.payload = msg.payload[0];\n        node.status({ fill: \"green\", shape: \"dot\", text: `INIT data-model.`});\n        \n        return [msg, null];\n    }\n}\nelse if (msg.topic === \"UPDATE\"  ||  msg.topic === \"nodered/mcu/state\" ||\n         msg.topic === \"nodered/mcu/cmd\"  ) {\n\n    //let update = (typeof msg.payload === \"object\") ? msg.payload : {};\n    let update =  msg.payload ;\n    let merged = Object.assign({}, mcu_state, update);\n    delete merged.time;\n    global.set(\"mcu_state\", merged);\n    msg.payload = merged;\n    node.status({ fill: \"green\", shape: \"dot\", text: `UPDATE data-model.`});\n    return [msg, msg];\n}\n\nreturn [null, null];\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 120,
+        "wires": [
+            [
+                "7fef285c7811f57e"
+            ],
+            [
+                "5fc842185202a77b"
+            ]
+        ]
+    },
+    {
+        "id": "5fc842185202a77b",
+        "type": "influxdb3-write",
+        "z": "445503803795d0d6",
+        "influxdb": "993f7a7e67f7abc6",
+        "name": "WRITE  table mcu_state_v1",
+        "measurement": "mcu_state_v1",
+        "database": "",
+        "x": 820,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f11fc7beafd2a072",
+        "type": "inject",
+        "z": "445503803795d0d6",
+        "name": "INIT",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "INIT",
+        "payload": "",
+        "payloadType": "date",
+        "x": 90,
+        "y": 120,
+        "wires": [
+            [
+                "2f2c6f12f34eff60"
+            ]
+        ]
+    },
+    {
+        "id": "2f2c6f12f34eff60",
+        "type": "influxdb3-read",
+        "z": "445503803795d0d6",
+        "host": "http://PI5-IOT-EDGE-U25:8181",
+        "token": "apiv3_TG47d3Knud2iq2IfyZRrrODjMRDLHQOg4pOrRaPBBr-oEaMSWp9Lgj63ZAn8rMCQpcuhO89Th0CfEbtOnOZqAg",
+        "database": "DATA-NODERED",
+        "query": "select * from mcu_state_v1 ORDER BY  time  desc  limit 1 ",
+        "x": 260,
+        "y": 120,
+        "wires": [
+            [
+                "05c142028349c498"
+            ]
+        ]
+    },
+    {
+        "id": "f1cefee9292a0ab4",
+        "type": "catch",
+        "z": "445503803795d0d6",
+        "name": "",
+        "scope": [
+            "2f2c6f12f34eff60"
+        ],
+        "uncaught": false,
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "05c142028349c498"
+            ]
+        ]
+    },
+    {
+        "id": "61eb34d020968d7f",
+        "type": "comment",
+        "z": "445503803795d0d6",
+        "name": "Global env.  DATA-MODEL[mcu_state ]   ",
+        "info": "# INITIALISATION DATA-MODEL [mcu_state] \n+----------+-------+--------+-------+--------+-------------------------------+\n| ctx_mode | fan   | heater | led   | rh_max | time                          |\n+----------+-------+--------+-------+--------+-------------------------------+\n| A        | true  | 125.0  | false | 75.0   | 2026-02-21T09:05:16.186591317 |\n| A        | false | 125.0  | false | 75.0   | 2026-02-21T08:21:47.225158934 |\n| A        | true  | 125.0  | false | 75.0   | 2026-02-21T08:20:46.854595974 |\n| A        | false | 125.0  | false | 75.0   | 2026-02-21T08:11:57.166618680 |\n+----------+-------+--------+-------+--------+-------------------------------+\n",
+        "x": 570,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "7fef285c7811f57e",
+        "type": "debug",
+        "z": "445503803795d0d6",
+        "name": "[mcu_state] Updated",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 740,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "5c44e1c5d282b2e7",
+        "type": "mqtt in",
+        "z": "445503803795d0d6",
+        "name": "",
+        "topic": "nodered/mcu/state",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "d777b42973a5dfe3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 180,
+        "wires": [
+            [
+                "05c142028349c498"
+            ]
+        ]
+    },
+    {
+        "id": "639add21c21b682b",
+        "type": "comment",
+        "z": "445503803795d0d6",
+        "name": "Global env.  DATA-MODEL[mcu_cmd ]   ",
+        "info": "# INITIALISATION DATA-MODEL [mcu_cmd] \n{\n    \"element\": \"fan\",\n    \"type\": \"boolean\",\n    \"mode\": \"absolute\",\n    \"value\": \"false\"\n}\n\nInfluxdb3 table mcu_cmd_v* \n+---------+----------+-------------------------------+---------+-------+\n| element | mode     | time                          | type    | value |\n+---------+----------+-------------------------------+---------+-------+\n| led     | absolute | 2026-02-21T19:15:07.495058299 | boolean | false |\n| led     | absolute | 2026-02-21T19:14:08.186311078 | boolean | true  |\n+---------+----------+-------------------------------+---------+-------+\n\n\n",
+        "x": 570,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "9dbc77b416c573a4",
+        "type": "link in",
+        "z": "445503803795d0d6",
+        "name": "LOOP FOR SIMULATION",
+        "links": [
+            "083687455a2992c6"
+        ],
+        "x": 125,
+        "y": 240,
+        "wires": [
+            [
+                "4fa1f05ab7aad678"
+            ]
+        ]
+    },
+    {
+        "id": "4fa1f05ab7aad678",
+        "type": "delay",
+        "z": "445503803795d0d6",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 240,
+        "wires": [
+            [
+                "05c142028349c498"
+            ]
+        ]
+    },
+    {
+        "id": "2d705bc6afef91a8",
+        "type": "mqtt in",
+        "z": "445503803795d0d6",
+        "name": "topic nodered/mcu/cmd",
+        "topic": "nodered/mcu/cmd",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "d777b42973a5dfe3",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 320,
+        "wires": [
+            [
+                "5f78fed6c51835a0",
+                "bf7463742153c4e2"
+            ]
+        ]
+    },
+    {
+        "id": "5f78fed6c51835a0",
+        "type": "function",
+        "z": "445503803795d0d6",
+        "name": "[mcu_cmd]  element/value -> { [element] : value} ",
+        "func": "//{\n//    \"element\": \"fan\",\n//    \"type\": \"boolean\",\n//    \"mode\": \"absolute\",\n//    \"value\": \"false\"\n//}\n\nif (!msg.payload || msg.payload.mode === undefined || \n    msg.payload.value === undefined || msg.payload.value === null ||\n    msg.payload.element === undefined ) \n    {\n    node.warm({ fill: \"yellow\", shape: \"dot\", text: `Invalid payload:  ${JSON.stringify(msg.payload)}  `});\n    return [null, null] ;\n}\n\nlet storageMsg = RED.util.cloneMessage(msg);\n\n// [mcu_cmd]  element/value -> { [element] : value} \n\nlet field = msg.payload.element;\nlet value ;\n\nswitch (msg.payload.type) {\n    case 'boolean':\n        value = String(msg.payload.value).toLowerCase() === \"true\";\n        break;\n    case 'integer':\n        value = parseInt(msg.payload.value, 10);\n        if (isNaN(value)) return null;\n        break;\n    default:\n        value = msg.payload.value;\n}\nmsg.payload = { [field]: value };\nnode.status({ fill: \"green\", shape: \"dot\", text: `Valid CMD payload:  ${JSON.stringify(msg.payload)}  `});\n\nreturn  [msg , storageMsg];\n\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 380,
+        "wires": [
+            [
+                "083687455a2992c6"
+            ],
+            [
+                "e2020879342ace8d"
+            ]
+        ]
+    },
+    {
+        "id": "e2020879342ace8d",
+        "type": "influxdb3-write",
+        "z": "445503803795d0d6",
+        "influxdb": "993f7a7e67f7abc6",
+        "name": "WRITE  table mcu_cmd_v3",
+        "measurement": "mcu_cmd_v3",
+        "database": "",
+        "x": 820,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "083687455a2992c6",
+        "type": "link out",
+        "z": "445503803795d0d6",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "9dbc77b416c573a4"
+        ],
+        "x": 715,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "bf7463742153c4e2",
+        "type": "debug",
+        "z": "445503803795d0d6",
+        "name": "[mcu_cmd] Command",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "d78524fc3dea6348",
+        "type": "http in",
+        "z": "445503803795d0d6",
+        "name": "/grafana-webhook",
+        "url": "/grafana-webhook",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 110,
+        "y": 520,
+        "wires": [
+            [
+                "599e8260b8aa2c28"
+            ]
+        ]
+    },
+    {
+        "id": "c6357a8f5d662bb1",
+        "type": "mqtt out",
+        "z": "445503803795d0d6",
+        "name": "nodered/mcu/cmd",
+        "topic": "",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d777b42973a5dfe3",
+        "x": 850,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "5199f319af213366",
+        "type": "http response",
+        "z": "445503803795d0d6",
+        "name": "HTTP StatusCode",
+        "statusCode": "200",
+        "headers": {},
+        "x": 850,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "fe1dadc57947ac54",
+        "type": "comment",
+        "z": "445503803795d0d6",
+        "name": "HTTP Web Server - [POST] ",
+        "info": "",
+        "x": 200,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "599e8260b8aa2c28",
+        "type": "function",
+        "z": "445503803795d0d6",
+        "name": "Check  Data Model Validity",
+        "func": "msg.topic =  \"nodered/mcu/cmd\" ; \nlet httpMsg = RED.util.cloneMessage(msg);\n\n// Vérifier que msg.payload existe\nif (!msg.payload || typeof msg.payload !== \"object\") {\n    node.warn(\"msg.payload manquant ou invalide\");\n    httpMsg.statusCode = 400 ;  // HTTP Session RC bad request  \n    httpMsg.payload = { \"status\": \"msg.payload manquant ou invalide\" } ; \n    return [httpMsg,null] ;\n}\n\n// Liste des champs obligatoires\nconst requiredFields = [\"element\", \"type\", \"mode\", \"value\"];\n\n// Vérifier que tous les champs sont présents\nfor (let field of requiredFields) {\n    if (!(field in msg.payload)) {\n        node.warn(`Champ manquant: ${field}`);\n        httpMsg.payload = { \"status\": \"Champ manquant: ${field}\" } ; \n        httpMsg.statusCode = 400 ; \n        return [httpMsg,null];\n    }\n}\n\n// Pour info, on peut log le payload\nnode.status({fill:\"green\", shape:\"dot\", text:`Valid payload: ${JSON.stringify(msg.payload) } `});\n\nhttpMsg.payload = { \"status\": \"Valid payload: ${msg.payload.element}  value: ${msg.payload.value}\" } ; \nhttpMsg.statusCode = 200 ;  // HTTP Session RC \nreturn [httpMsg,msg];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 520,
+        "wires": [
+            [
+                "5199f319af213366"
+            ],
+            [
+                "c6357a8f5d662bb1"
+            ]
+        ]
+    }
+]

@@ -10,6 +10,9 @@
 
 #include "gpio.h"
 #include "logger.h"
+#include "models.h"
+
+
 
 void initDisplayCtrl(void) ;
 

@@ -84,14 +84,14 @@ typedef enum {
 // =========================================================
 //   Data Models   
 // =========================================================
-
+/*
 typedef struct {
   int   lux;
   int   humidity;
   float temperature; 
   uint8_t counter ; 
 } sensors_dataModel_t;
-
+*/
 
 // =========================================================
 //                     MENU

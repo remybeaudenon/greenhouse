@@ -1,44 +1,26 @@
-//#include "esp32-hal.h"
 #include <stdint.h>
-//#include "esp32-hal-gpio.h"
 #include "src\plc.h"
-#include "src\models.h"
-#include "src\blinker.h"
-
-
-/*
-const char* AppModeNames[] = {
-    "FAN STOP",
-    "FAN ON",
-    "HEATER ON",
-    "HEATER OFF",
-    "----------"
-};
-*/
 
 
 void initPLC() {
-
 }
 
 void startPLCTask(){
   xTaskCreate( taskPLC,"PLC Logic", 4096, NULL, PRIORITY_LOW,   NULL );
 }
 
-
 void taskPLC(void *pvParameters) {
 
   ModeCtx_t modeCtx_q, modeCtx  = { .mode = '0' } ; 
-
-  sensors_dataModel_t sensors_dataModel , sensors_dataModel_q  = {0}  ; 
+  GreenhouseSensorsModel_t sensorsModelView , sensorsModelView_q = {0} ; 
 
   logfTask("▶️ started  modeCtx.mode: [%c]  label: [%s] ", modeCtx.mode , getModeCtxLabel(modeCtx.mode)  );
 
   while (true) {
 
    // -------- INPUTS READING  --------
-    if (queueSensorDataModel != nullptr and  xQueuePeek(queueSensorDataModel, &sensors_dataModel_q, 0) == pdTRUE )
-      sensors_dataModel = sensors_dataModel_q ;
+    if ( queueSensorDataModel != nullptr  and  xQueuePeek(queueSensorDataModel, &sensorsModelView_q, 0) == pdTRUE )
+      sensorsModelView = sensorsModelView_q ; 
 
     if (modeCtxQueue != nullptr and  xQueuePeek(modeCtxQueue, &modeCtx_q, 0) == pdTRUE )
       
@@ -54,12 +36,10 @@ void taskPLC(void *pvParameters) {
     switch (modeCtx.mode) {
       case 'M' :    //case FAN_ON:
         digitalWrite(GPIO_FAN, HIGH);
-        //digitalWrite(GPIO_BOARD_LED, HIGH);
         break;
 
       case 'A' :   //case FAN_STOP:
         digitalWrite(GPIO_FAN, LOW);
-        //digitalWrite(GPIO_BOARD_LED, LOW);
         break;
 
       case 'F' :   //case HEATER_OFF:
@@ -69,7 +49,7 @@ void taskPLC(void *pvParameters) {
       case '0' :   //case HEATER_ON:
       {
 
-        int lux = sensors_dataModel.lux;
+        int lux = sensorsModelView.bh1750_light;
 
         // Saturation bornes
         if (lux <= 0)
@@ -143,7 +123,3 @@ void applyAnalogOutput(uint32_t bitMask,uint8_t pin, int normalValue)
 
     analogWrite(pin, outputValue);
 }
-
-
-
-
