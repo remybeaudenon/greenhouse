@@ -24,7 +24,7 @@ void startBlinkerTask(){
 
 void blinkerTask(void* pvParameters)
 {
-    logfTask("▶️ started.");
+    logfTask(LOG_INFO, "▶️ started.");
 
     while(true)
     {

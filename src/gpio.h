@@ -20,7 +20,7 @@
 //                                              J2:07  ==> [RST]     
 //                                              J2:06  ==> [USB Tx]    
 //                                              J2:05  <== [USB Rx]     
-//                                              J2:04  <== Ve 
+//                                              J2:04  <== Ve       |==> BH1750 , SHT31 Supply
 //                                              J2:03  <== Ve       |==> Encoder Supply  
 //                                              J2:02  <== Vin +5 ==|<== [DC-DC] <== 12 Volts.     
 //                                              J2:01  GROUND     ==> Encoder  
@@ -37,8 +37,8 @@
 #define GPIO_SCL_PIN            46  // GPIO(46) J3:05  <==> Ground OSOYOO (I2C SCL LCD) 
 //                                              J3:04    
 //                                              J3:03  ==> 3.3 Volts ==>  
-//                                              J3:02  ==> 3.3 Volts  ==> BH1750, SHT31    
-//                                              J3:01  GROUND         ==> BH1750, SHT31  
+//                                              J3:02  ==> 3.3 Volts  ==> BME280   
+//                                              J3:01  GROUND         ==> BME280  
 
 // -----------------------------------------------------------------------------
 // Fonction d'initialisation simple pour les GPIO utilisés
@@ -68,7 +68,7 @@ inline void initGPIO() {
     analogWrite(GPIO_PWM_HEATER, 155 ) ;  
     digitalWrite (GPIO_FAN , LOW ) ;  
     
-    logfTask("initGPIO() completed.");
+    logfTask(LOG_INFO,"initGPIO() completed.");
 
 
     // I2C BH1750 et OLED seront initialisés par Wire / TwoWire

@@ -14,7 +14,7 @@ void taskPLC(void *pvParameters) {
   ModeCtx_t modeCtx_q, modeCtx  = { .mode = '0' } ; 
   GreenhouseSensorsModel_t sensorsModelView , sensorsModelView_q = {0} ; 
 
-  logfTask("▶️ started  modeCtx.mode: [%c]  label: [%s] ", modeCtx.mode , getModeCtxLabel(modeCtx.mode)  );
+ logfTask( LOG_INFO ,"▶️ started  modeCtx.mode: [%c]  label: [%s] ", modeCtx.mode , getModeCtxLabel(modeCtx.mode)  );
 
   while (true) {
 
@@ -26,7 +26,7 @@ void taskPLC(void *pvParameters) {
       
       { if (modeCtx.mode != modeCtx_q.mode ) 
         {
-          logfTask("modeCtx.mode: [%c]  label: [%s] ", modeCtx_q.mode , getModeCtxLabel(modeCtx_q.mode) );
+          logfTask( LOG_INFO ,"modeCtx.mode: [%c]  label: [%s] ", modeCtx_q.mode , getModeCtxLabel(modeCtx_q.mode) );
           modeCtx = modeCtx_q ; 
         }
       }  
@@ -49,7 +49,7 @@ void taskPLC(void *pvParameters) {
       case '0' :   //case HEATER_ON:
       {
 
-        int lux = sensorsModelView.bh1750_light;
+        int lux = sensorsModelView.lightSensor.light;
 
         // Saturation bornes
         if (lux <= 0)
@@ -68,7 +68,7 @@ void taskPLC(void *pvParameters) {
 
       default: 
       {
-        logfTask("⚠ !!! Defaults mode" ) ;
+        logfTask(LOG_INFO ,"⚠ !!! Defaults mode" ) ;
         vTaskDelay(pdMS_TO_TICKS(5000));
       }
       break; 

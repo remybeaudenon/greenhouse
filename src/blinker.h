@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "globals.h"
-#include "src\logger.h"
+#include "logger.h"
 
 struct BlinkerFlag {
     uint32_t durationOnMs;  // durée allumée

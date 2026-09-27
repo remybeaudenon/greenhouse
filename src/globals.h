@@ -1,5 +1,9 @@
-#include <stdint.h>
 #pragma once
+
+#ifndef GLOBALS_H
+#define GLOBALS_H 
+
+#include <stdint.h>
 #include <Arduino.h>
 // ----------------------------------
 // Codes et defines
@@ -25,6 +29,15 @@
 // ----------------------------------
 #define FORCE_GPIO07_MASK    (1 << 7)
 
+// =========================================================
+//                     Loki LOG
+// =========================================================
+enum LogLevel_t {
+    LOG_INFO,
+    LOG_WARNING,
+    LOG_ERROR,
+    LOG_DEBUG
+};
 
 // =========================================================
 //                     MODES APPLICATION
@@ -43,7 +56,6 @@ typedef struct {
 
 extern const ModeCtxMappings_t modeCtxMappings[];
 extern const uint8_t modeCtxMappingsCount;
-
 
 
 const char* getModeCtxLabel(char code);
@@ -67,31 +79,24 @@ typedef struct  {
 } ModeCtx_t ;
 
 
-
-
-
 // =========================================================
 //   RTOS QUEUES DATA 
 // =========================================================
-typedef enum {
+enum EncoderEvent_t {
   EVT_NONE,
   EVT_UP,
   EVT_DOWN,
   EVT_SELECT,
   EVT_SELECT_LONG
-} EncoderEvent_t;
+};
 
-// =========================================================
-//   Data Models   
-// =========================================================
-/*
-typedef struct {
-  int   lux;
-  int   humidity;
-  float temperature; 
-  uint8_t counter ; 
-} sensors_dataModel_t;
-*/
+// -- Loki Queue setup  
+#define LOKI_MESSAGE_SIZE   256
+struct LokiMessage_t {
+    char level[9];
+    char taskName[32];
+    char message[LOKI_MESSAGE_SIZE];
+};
 
 // =========================================================
 //                     MENU
@@ -117,6 +122,7 @@ enum TaskPriority {
 };
 
 // =========================================================
+#endif // GLOBALS_H
 // =========================================================
 
 

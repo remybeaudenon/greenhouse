@@ -73,7 +73,7 @@ void drawMenu() {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
 
   char buf[50];
-  sprintf(buf, "%5d Lux | %3.1f° | %2d%% RH", sensorsModelView.bh1750_light, sensorsModelView.sht31_temperature, sensorsModelView.sht31_humidity);
+  sprintf(buf, "%5d Lux | %3.1f° | %2d%% RH", sensorsModelView.lightSensor.light, sensorsModelView.plantAirSensor.temperature, sensorsModelView.plantAirSensor.humidity);
   display.drawString(4, 2, buf);
 
   // ----- ZONE MENU -----
@@ -134,8 +134,8 @@ void taskDisplayCtrl(void *pvParameters){
   //ModeEvent_t modeEvent = { MODE_AUTO } ;
   ModeCtx_t modeCtx = {MODE_AUTO} ;    
 
-  String taskName = pcTaskGetName(NULL) ; 
-  logTask(taskName,"▶️ started.");
+  //String taskName = pcTaskGetName(NULL) ; 
+  logfTask(LOG_INFO,"▶️ started.");
 
   drawMenu();
 

@@ -45,7 +45,7 @@ void taskRotaryEncoder(void* parameter) {
     uint32_t lastDebounceTime = 0;
 
     //String taskName = pcTaskGetName(NULL) ; 
-    logfTask("▶️ started.");
+    logfTask(LOG_INFO, "▶️ started.");
 
     int lastPosition = encoder.getPosition();
 

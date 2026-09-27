@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
-
 #include "logger.h"
 
 extern Preferences prefs;
@@ -21,17 +20,18 @@ inline String loadFromPrefs(const char* key, const String& defaultJson = "{}") {
     prefs.begin(PREFS_NAMESPACE, false);
     if (!prefs.isKey(key)) {
         prefs.putString(key, defaultJson);
-
+        logfTask(LOG_INFO,"::loadFromPrefs 🟡 load [%s] key not found", key );
     }
     String value = prefs.getString(key);
     prefs.end();
     return value;
 }
 
-
-// ------------
-
+// # --- MQTT_CONFIG MODELS 2.0.0 --- 
 struct MQTTConfig_t {
+
+    static constexpr const char* PREFS_KEY = "NX510v";
+
     char wifi_ssid[32];
     char wifi_password[64];
     char server[64] ; // "PI5-IOT-EDGE-U25.local" ; // 192.168.8.128";
@@ -39,26 +39,27 @@ struct MQTTConfig_t {
 
     String toJson() const {
         StaticJsonDocument<JSON_DOC_SIZE> doc;
+        String out;
+
         doc["wifi_ssid"] = wifi_ssid;
         doc["wifi_password"] = wifi_password;
         doc["server"] = server;
         doc["port"] = port;
-        String out;
         serializeJson(doc, out);
         return out;
     }
     bool fromJson(const String& json) {
         StaticJsonDocument<JSON_DOC_SIZE> doc;
         if (deserializeJson(doc, json)) return false;
-        const char* ssidTmp = doc["wifi_ssid"] | "SSID_REMY";
+        const char* ssidTmp = doc["wifi_ssid"] | "SSID_????";
         strncpy(wifi_ssid, ssidTmp, sizeof(wifi_ssid));
         wifi_ssid[sizeof(wifi_ssid) - 1] = '\0';  // sécurité
 
-        const char* passTmp = doc["wifi_password"] | "Beaud3non.";
+        const char* passTmp = doc["wifi_password"] | "****";
         strncpy(wifi_password, passTmp, sizeof(wifi_password));
         wifi_password[sizeof(wifi_password) - 1] = '\0';
 
-        const char* serverTmp = doc["server"] | "PI5-IOT-EDGE-U25.local";
+        const char* serverTmp = doc["server"] | "MQTT-SERVER-NAME.local";
         strncpy(server, serverTmp, sizeof(server));
         server[sizeof(server) - 1] = '\0';
 
@@ -66,15 +67,14 @@ struct MQTTConfig_t {
         return true;
     }
     void save() {
-        saveToPrefs("NX510v", toJson());
+        saveToPrefs(PREFS_KEY, toJson());
     }
 
     void load() {
         
         //fromJson(loadFromPrefs("CUDY-550C", R"({"wifi_ssid":"CUDY-550C","wifi_password":"0477060671","server":"PI5-IOT-EDGE-U25.local","port":1883})" )) ; 
-        fromJson(loadFromPrefs("NX510v", R"({"wifi_ssid":"SSID_REMY","wifi_password":"Beaud3non.","server":"PI5-IOT-EDGE-U25.local","port":1883})" )) ; 
-
-        logfTask("⚙️  load mqttConfig Properties  NX510v:  %s ", toJson().c_str() );
+        fromJson(loadFromPrefs(PREFS_KEY, R"({"wifi_ssid":"SSID_REMY","wifi_password":"Beaud3non.","server":"PI5-IOT-EDGE-U25.local","port":1883})" )) ; 
+        logfTask(LOG_INFO,"⚙️  load [mqttConfig] Properties  NX510v: %s ", toJson().c_str() );
     }
 
 };
@@ -83,6 +83,9 @@ extern MQTTConfig_t mqttConfig;
 
 // # --- CMD MODELS 2.0.0 --- 
 struct GreenhouseCmdModel_t {
+
+    static constexpr const char* PREFS_KEY = "cmdModel_v1";
+
     int modeCtx;
     int rssi;
     int samplingSensors;
@@ -142,26 +145,45 @@ struct GreenhouseCmdModel_t {
     }
 
     void save() {
-        saveToPrefs("cmdModel_v1", toJson());
+        saveToPrefs(PREFS_KEY, toJson());
     }
 
     void load() {
-        fromJson(loadFromPrefs("cmdModel_v1"));
-        logfTask("⚙️  load [cmdModel] Properties:  %s ", toJson().c_str() );
+        fromJson(loadFromPrefs(PREFS_KEY));
+        logfTask(LOG_INFO,"⚙️  load [cmdModel] Properties:  %s ", toJson().c_str() );
     }
 
 };
 extern GreenhouseCmdModel_t cmdModel;
 
-
 // # --- SENSORS MODELS 2.0.0 --- 
+struct SHT31Sensor_t {
+    float temperature;
+    int   humidity;
+
+    bool modelDirty;
+};
+
+struct BH1750Sensor_t {
+    int light;
+    bool modelDirty;
+};
+
+struct BME280Sensor_t {
+    float temperature;
+    int   humidity;
+    float pressure;
+    bool modelDirty;
+};
+
 struct GreenhouseSensorsModel_t {
-    float sht31_temperature;
-    int   sht31_humidity; 
-    int   bh1750_light; 
-    float bme280_temperature;
-    int   bme280_humidity; 
-    int   bme280_pressure;  
+    
+    static constexpr const char* PREFS_KEY = "sensorsModel";
+
+    // Model hardware Technic ===> Logic Data  
+    SHT31Sensor_t  plantAirSensor;
+    BH1750Sensor_t lightSensor;
+    BME280Sensor_t exteriorAirSensor;
 
     bool modelDirty;
 
@@ -169,13 +191,13 @@ struct GreenhouseSensorsModel_t {
     String toJson() const {
         StaticJsonDocument<JSON_DOC_SIZE> doc; 
 
-        doc["sht31_temperature"] = sht31_temperature;
-        doc["sht31_humidity"] = sht31_humidity; 
-        doc["bh1750_light"] = bh1750_light; 
-        doc["bme280_temperature"] = bme280_temperature;
-        doc["bme280_humidity"] = bme280_humidity; 
-        doc["bme280_pressure"] = bme280_pressure;  
-        
+        doc["plantAirSensor"]["temperature"]    = plantAirSensor.temperature;
+        doc["plantAirSensor"]["humidity"]       = plantAirSensor.humidity;
+        doc["lightSensor"]["light"]             = lightSensor.light;
+        doc["exteriorAirSensor"]["temperature"] = exteriorAirSensor.temperature;
+        doc["exteriorAirSensor"]["humidity"]    = exteriorAirSensor.humidity;
+        doc["exteriorAirSensor"]["pressure"]    = exteriorAirSensor.pressure;
+   
         String out;
         serializeJson(doc, out);
         return out;
@@ -186,26 +208,28 @@ struct GreenhouseSensorsModel_t {
         StaticJsonDocument<750> doc;
         deserializeJson(doc, json);
 
-        sht31_temperature = doc["sht31_temperature"] | 0.0f;
-        sht31_humidity = doc["sht31_humidity"] | 0; 
-        bh1750_light = doc["bh1750_light"] | 0; 
-        bme280_temperature = doc["bme280_temperature"] | 0.0f;
-        bme280_humidity = doc["bme280_humidity"] | 0; 
-        bme280_pressure = doc["bme280_pressure"] | 0;  
+        plantAirSensor.temperature      = doc["plantAirSensor"]["temperature"] | 0.0f;
+        plantAirSensor.humidity         = doc["plantAirSensor"]["humidity"] | 0;
+        lightSensor.light               = doc["lightSensor"]["light"] | 0 ;
+        exteriorAirSensor.temperature   = doc["exteriorAirSensor"]["temperature"] | 0.0f;
+        exteriorAirSensor.humidity      = doc["exteriorAirSensor"]["humidity"] | 0;
+        exteriorAirSensor.pressure      = doc["exteriorAirSensor"]["pressure"] | 0.0f ;
 
         modelDirty = true; 
     }
 
     void save() {
-        saveToPrefs("sensorsModel", toJson());
-        //logfTask("⚙️  save [sensorsModel] Properties:  %s ", toJson().c_str() );
+        saveToPrefs(PREFS_KEY, toJson());
+        //logfTask(LOG_INFO,"⚙️  save [sensorsModel] Properties:  %s ", toJson().c_str() );
 
     }
 
     void load() {
-        fromJson(loadFromPrefs("sensorsModel"));
-        logfTask("⚙️  load [sensorsModel] Properties:  %s ", toJson().c_str() );
+        fromJson(loadFromPrefs(PREFS_KEY));
+        logfTask(LOG_INFO,"⚙️  load [sensorsModel] Properties:  %s ", toJson().c_str() );
     }
 
 };
 extern GreenhouseSensorsModel_t sensorsModel;
+
+

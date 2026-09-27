@@ -6,6 +6,8 @@ int wifiStatus = WL_IDLE_STATUS;
 // === Publish Topics 
 const char* mqttSensorsDataTopic  = "greenhouse/mcu/sensors_data";
 const char* mqttCmdDataTopic      = "greenhouse/mcu/cmd_data";
+const char* mqttLokiDataTopic      = "greenhouse/log";
+
 
 // === Subscribe Topics 
 const char* mqttSubscribeTopics[] = {
@@ -63,11 +65,11 @@ void onMessageReceived(char* topic, byte* payload, unsigned int length) {
   msg.payload[msg.length] = '\0';
   msg.timestamp = millis();
 
-  logfTask("📥 onMessageReceived() Push message into xQueue at : [%lu] ", (unsigned long)msg.timestamp ) ;  
+  logfTask(LOG_INFO , "📥 onMessageReceived() Push message into xQueue at : [%lu] ", (unsigned long)msg.timestamp ) ;  
 
   // Envoi non bloquant dans la queue
   if (xQueueSend(mqttMsgQueue, &msg, 0) != pdPASS) {
-    logfTask("⚠ MQTT queue full, message dropped." ) ;  
+    logfTask(LOG_INFO , "⚠ MQTT queue full, message dropped." ) ;  
   }
 }
 
@@ -79,27 +81,27 @@ void connectWiFi() {
   
   vTaskDelay(pdMS_TO_TICKS(100));
 
-  logfTask("📥 connectWiFi() Scan WiFi SSID ") ;  
+  logfTask(LOG_INFO , "📥 connectWiFi() Scan WiFi SSID ") ;  
 
   int n = WiFi.scanNetworks();
   if (n == 0) {
-    logfTask("📥 connectWiFi() No WiFi available ") ;  
+    logfTask(LOG_INFO , "📥 connectWiFi() No WiFi available ") ;  
   } else {
-    logfTask("📥 connectWiFi() [%d] SSID found." , n ) ;  
+    logfTask(LOG_INFO , "📥 connectWiFi() [%d] SSID found." , n ) ;  
     for (int i = 0; i < n; ++i) {
       String ssidScan = WiFi.SSID(i);
-      logfTask("📥 connectWiFi() SSID --> [%s]" , ssidScan.c_str() ) ;  
+      logfTask(LOG_INFO , "📥 connectWiFi() SSID --> [%s]" , ssidScan.c_str() ) ;  
     }
   }
 
-  logfTask("Attempting to connect to SSID: [%s] pass:[%s] ", mqttConfig.wifi_ssid, mqttConfig.wifi_password ) ;  
+  logfTask(LOG_INFO , "Attempting to connect to SSID: [%s] pass:[%s] ", mqttConfig.wifi_ssid, mqttConfig.wifi_password ) ;  
 
   WiFi.begin(mqttConfig.wifi_ssid, mqttConfig.wifi_password);
   while (WiFi.status() != WL_CONNECTED) {
     vTaskDelay(pdMS_TO_TICKS(2000));
-    logfTask("Waiting ...");
+    logfTask(LOG_INFO , "Waiting ...");
   }
-  logfTask("🟢 Connected using IP:[%s] channel:[%d] rssi: [%d]", WiFi.localIP().toString().c_str(), WiFi.channel() ,WiFi.RSSI());
+  logfTask(LOG_INFO , "🟢 Connected using IP:[%s] channel:[%d] rssi: [%d]", WiFi.localIP().toString().c_str(), WiFi.channel() ,WiFi.RSSI());
 }
 
 
@@ -121,7 +123,7 @@ void processMqttQueueMessage()
   memcpy(payloadBuffer, msg.payload, msg.length);
   payloadBuffer[msg.length] = '\0';
 
-  logfTask("Process Queue Msg [%lu] topic [%s] payload [%s].",(unsigned long)msg.timestamp, msg.topic,  payloadBuffer);
+  logfTask(LOG_INFO , "Process Queue Msg [%lu] topic [%s] payload [%s].",(unsigned long)msg.timestamp, msg.topic,  payloadBuffer);
 
   // ================================
   // MQTT WILL STATE
@@ -132,7 +134,7 @@ void processMqttQueueMessage()
     {
       bool ok = client.publish(mqttStateTopic, mqttWillPayloadOnline, true);
       if (!ok) {
-        logfTask("⚠ Publish failed. Retry MQTT connect.");
+        logfTask(LOG_WARNING , "⚠ Publish failed. Retry MQTT connect.");
         mcuState = MCU_MQTT_CONNECTING;
       }
     }
@@ -149,7 +151,7 @@ void processMqttQueueMessage()
 
     if (error)
     {
-      logfTask("⚠ JSON parse error");
+      logfTask(LOG_INFO , "⚠ JSON parse error");
         return;
     }
 
@@ -194,7 +196,7 @@ void processMqttQueueMessage()
 
      if (cmdModel.modelDirty ) 
           cmdModel.save(); 
-    logfTask("cmdModel %s", ( cmdModel.modelDirty ? "updated." : "⚠  no update." ));
+    logfTask(LOG_INFO , "cmdModel %s", ( cmdModel.modelDirty ? "updated." : "⚠  no update." ));
 
   } 
   // ================================
@@ -205,7 +207,7 @@ void processMqttQueueMessage()
     StaticJsonDocument<64> doc;
     DeserializationError err = deserializeJson(doc, payloadBuffer);
     if (err) {
-      logfTask("⚠ JSON parse error");
+      logfTask(LOG_INFO , "⚠ JSON parse error");
       return;
     }
 
@@ -225,7 +227,7 @@ void processMqttQueueMessage()
     }
 
     if (!valid) {
-      logfTask( "⚠ GPIO: [%i] not allowed ", gpio);
+      logfTask(LOG_INFO ,  "⚠ GPIO: [%i] not allowed ", gpio);
       return;
     }
 
@@ -233,7 +235,7 @@ void processMqttQueueMessage()
     if (gpio == 7 ) 
     {
       applyForcePWMGPIO(gpio, force,value);
-      logfTask("Force PWM Enabled:[0x%02X] Value:[%d]", cmdModel.pwm_force_enable, cmdModel.pwm_force_value[ (int)gpio]);
+      logfTask(LOG_INFO , "Force PWM Enabled:[0x%02X] Value:[%d]", cmdModel.pwm_force_enable, cmdModel.pwm_force_value[ (int)gpio]);
     
     } else 
     {
@@ -241,7 +243,7 @@ void processMqttQueueMessage()
        gpio = 1;
 
       applyForceDigitalGPIO(gpio, force, value);
-      logfTask("%s Digital gpio %i Enabled:[0x%02X] Value:[0x%02X]", (force ? "Force" : "UnForce") , gpio ,  cmdModel.digital_force_enable, cmdModel.digital_force_value);
+      logfTask(LOG_INFO , "%s Digital gpio %i Enabled:[0x%02X] Value:[0x%02X]", (force ? "Force" : "UnForce") , gpio ,  cmdModel.digital_force_enable, cmdModel.digital_force_value);
     }
     cmdModel.modelDirty = true ;
     cmdModel.save();  
@@ -315,11 +317,12 @@ void startMqttTask(){
 void taskMqtt(void *pvParameters)
 {
   client.setServer(mqttConfig.server, mqttConfig.port);
+  //client.setServer("192.168.1.12", mqttConfig.port);
   client.setBufferSize(512);  // increase Payload size > 230 bytes 
   client.setCallback(onMessageReceived);
 
   vTaskDelay(pdMS_TO_TICKS(1000));
-  logfTask("▶️ started.");
+  logfTask(LOG_INFO , "▶️ started.");
   unsigned long  previousMillis = millis()  ; 
 
   while (true)
@@ -336,7 +339,7 @@ void taskMqtt(void *pvParameters)
           connectWiFi();
         else
           {
-            logfTask("🟢 WiFi connected.");
+            logfTask(LOG_INFO , "🟢 WiFi connected.");
             mcuState = MCU_MQTT_CONNECTING;
           }
         break;
@@ -344,19 +347,19 @@ void taskMqtt(void *pvParameters)
 
       case MCU_MQTT_CONNECTING:
       {
-        logfTask("Attempting to connect to  [%s:%i] MQTT broker." , mqttConfig.server ,mqttConfig.port );
+        logfTask(LOG_INFO , "Attempting to connect to  [%s:%i] MQTT broker." , mqttConfig.server ,mqttConfig.port );
 
         String clientId = "HeltecV3-Client-";
         clientId += String(random(0xffff), HEX);
 
         if (client.connect(clientId.c_str(), nullptr, nullptr, mqttStateTopic, 1, true, mqttWillPayloadOffline))
         {
-          logfTask("🟢 MQTT Connected clientID: [%s]." ,  clientId.c_str()  );
+          logfTask(LOG_INFO , "🟢 MQTT Connected clientID: [%s]." ,  clientId.c_str()  );
           mcuState = MCU_MQTT_CONNECTED;
         }
         else
         {
-          logfTask("🟡 Error MQTT rc: [%i]  retry in 1 Mn", client.state() );
+          logfTask(LOG_WARNING , "🟡 Error MQTT rc: [%i]  retry in 1 Mn", client.state() );
           vTaskDelay(pdMS_TO_TICKS(60000));
         }
         break;
@@ -367,7 +370,7 @@ void taskMqtt(void *pvParameters)
 
         //const char* topics[] = { mqttCmdTopic, mqttStateTopic, mqttForceTopic };
         for (int i = 0; i < mqttSubscribeTopicCount; i++) {
-          logfTask("Subscribe topic: [%s].", mqttSubscribeTopics[i]);
+          logfTask(LOG_INFO , "Subscribe topic: [%s].", mqttSubscribeTopics[i]);
           client.subscribe(mqttSubscribeTopics[i]);
         }
              
@@ -380,14 +383,14 @@ void taskMqtt(void *pvParameters)
       {
         if (WiFi.status() != WL_CONNECTED)
         {
-          logfTask("🔴 WiFi lost.");
+          logfTask(LOG_INFO , "🔴 WiFi lost.");
           mcuState = MCU_WIFI_CONNECTING;
           break;
         }
 
         if (!client.connected())
         {
-          logfTask("🔴 MQTT lost.");
+          logfTask(LOG_INFO , "🔴 MQTT lost.");
           mcuState = MCU_MQTT_CONNECTING;
           break;
         }
@@ -397,16 +400,40 @@ void taskMqtt(void *pvParameters)
           //mqttConfig.rssi = WiFi.RSSI() ; 
           String aJson = cmdModel.toJson() ;         
           client.publish(mqttCmdDataTopic, aJson.c_str());  
-          logfTask("Publish new data on topic: [%s] ",mqttCmdDataTopic );
+          logfTask(LOG_DEBUG , "Publish new data on topic: [%s] ",mqttCmdDataTopic );
           cmdModel.modelDirty = false ; 
         }
                 
         if(sensorsModel.modelDirty)
         {
-          String json =  sensorsModel.toJson() ;   
+          StaticJsonDocument<750> doc;
+
+          doc["plant_temperature"]  = sensorsModel.plantAirSensor.temperature;
+          doc["plant_humidity"]     = sensorsModel.plantAirSensor.humidity;
+          doc["light"]              = sensorsModel.lightSensor.light;
+          doc["exterior_temperature"] = sensorsModel.exteriorAirSensor.temperature;
+          doc["exterior_humidity"]    = sensorsModel.exteriorAirSensor.humidity;
+          doc["exterior_pressure"]    = sensorsModel.exteriorAirSensor.pressure;
+          String json;
+          serializeJson(doc, json);
           client.publish(mqttSensorsDataTopic, json.c_str());  
-          logfTask("Publish new data on topic: %s",mqttSensorsDataTopic );
+          logfTask(LOG_DEBUG , "Publish new data on topic: %s",mqttSensorsDataTopic );
           sensorsModel.modelDirty = false ; 
+        }
+
+        // dequeueMessageAsJson(QueueHandle_t lokiQueue) {
+        if (lokiQueue != nullptr) {
+          LokiMessage_t record;
+          // Tentative de réception d'un message (attend 10 ticks si la file est vide)
+          if (xQueueReceive(lokiQueue, &record, 10) == pdPASS) {
+            StaticJsonDocument<750> doc;
+            doc["level"] = record.level;
+            doc["taskName"] = record.taskName;
+            doc["message"] = record.message;
+            String json;
+            serializeJson(doc, json);
+            client.publish(mqttLokiDataTopic, json.c_str());  
+          }
         }
 
         if (currentMillis - previousMillis >= 300000 ) 
